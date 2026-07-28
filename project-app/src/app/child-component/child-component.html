@@ -1,0 +1,38 @@
+<div style="border: 2px dashed blue; margin-top: 20px; padding: 15px">
+  <h2>Child Component</h2>
+
+  @if (users.length === 0) {
+    <p>No Users Available</p>
+  }
+
+  @if (users.length > 0) {
+    <table border="1" cellpadding="10" style="width: 100%">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Age</th>
+          <th>Address</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @for (user of users; track $index; let i = $index) {
+          <tr>
+            <td>{{ user.userName }}</td>
+
+            <td>{{ user.age }}</td>
+
+            <td>{{ user.address }}</td>
+
+            <td>
+              <button type="button" (click)="editUser(i)">Edit</button>
+
+              <button type="button" (click)="deleteUser(i)">Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

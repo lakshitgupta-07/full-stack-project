@@ -1,0 +1,154 @@
+<div class="text-center mb-4">
+
+    <div class="avatar-wrapper">
+
+        <img
+            [src]="avatarPreview || 'assets/default-avatar.png'"
+            class="profile-avatar">
+
+        <label class="camera-icon">
+
+            <i class="bi bi-camera-fill"></i>
+
+            <input
+                hidden
+                type="file"
+                accept="image/*"
+                (change)="onAvatarSelected($event)">
+
+        </label>
+
+    </div>
+
+</div>
+<div class="page-header">
+    <h1>Welcome, {{userForm.get('username')?.value}}</h1>
+    <button (click)="returnToHomePage()">Return To Home Page</button>
+    <button (click)="moveToParentComp()">Parent Component</button>
+</div>
+<div class="container mt-4">
+
+    <div class="card shadow">
+
+        <div class="card-body">
+
+            <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
+
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">
+                        Username: 
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        formControlName="username">
+                </div>
+
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">
+                        Phone Number: 
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        formControlName="phoneNumber">
+                </div>
+
+                
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">
+                        Address:
+                    </label>
+
+                    <textarea
+                        rows="3"
+                        class="form-control"
+                        formControlName="address">
+                    </textarea>
+                </div>
+
+
+                <div formArrayName="skills">
+
+                    <label class="form-label fw-bold">
+                        Skills: 
+                    </label>
+                    @for(skill of skills.controls; track $index; let i = $index) {
+                    <div class="d-flex mb-2">
+
+                        <input
+                            type="text"
+                            class="form-control me-2"
+                            [formControlName]="i">
+                        @if(isEditMode) {
+                        <button
+                            type="button"
+                            class="btn btn-danger"
+                            (click)="removeSkill(i)">
+
+                            Remove
+
+                        </button>
+                    }
+                
+
+                    </div>
+                }
+
+                </div>
+
+                @if(isEditMode) {
+                <button
+                    type="button"
+                    class="btn btn-success mt-2"
+                    (click)="addSkill('', false)">
+
+                    Add Skill
+
+                </button>
+            }
+
+                <hr>
+
+                @if(!isEditMode) {
+                <button
+                    type="button"
+                    class="btn btn-warning me-2"
+                    (click)="enableEdit()">
+
+                    Update Profile
+
+                </button>
+            }
+
+                <button
+                    *ngIf="isEditMode"
+                    type="submit"
+                    class="btn btn-primary me-2">
+
+                    Save Profile
+
+                </button>
+                @if(isEditMode){
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    (click)="cancelEdit()">
+
+                    Cancel
+
+                </button>
+            }
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>

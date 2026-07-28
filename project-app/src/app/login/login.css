@@ -1,0 +1,329 @@
+/* .login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f5f7fb;
+}
+
+.login-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px;
+}
+
+.theme-btn {
+  border: none;
+  background: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.login-card {
+
+  width: 420px;
+
+  margin: auto;
+
+  background: white;
+
+  border-radius: 12px;
+
+  padding: 40px;
+
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+
+}
+
+.login-card h1 {
+
+  text-align: center;
+
+  margin-bottom: 8px;
+
+}
+
+.subtitle {
+
+  text-align: center;
+
+  color: #777;
+
+  margin-bottom: 30px;
+
+}
+
+.divider {
+
+  display: flex;
+
+  align-items: center;
+
+  margin: 25px 0;
+
+}
+
+.divider::before,
+.divider::after {
+
+  content: "";
+
+  flex: 1;
+
+  height: 1px;
+
+  background: #ddd;
+
+}
+
+.divider span {
+
+  padding: 0 15px;
+
+  color: #888;
+
+}
+
+.social-btn {
+
+  width: 100%;
+
+  margin-bottom: 12px;
+
+}
+
+.google-btn {
+
+  background: white;
+
+  border: 1px solid #ddd;
+
+}
+
+.github-btn {
+
+  background: #24292f;
+
+  color: white;
+
+}
+
+.forgot-link {
+
+  display: block;
+
+  text-align: center;
+
+  margin-top: 20px;
+
+}
+
+.signup-link {
+
+  text-align: center;
+
+  margin-top: 15px;
+
+} */
+
+/* ============================= */
+/* Colors: change these to try   */
+/* your own theme!               */
+/* ============================= */
+.login-page {
+  --bg: #EAF0FF;
+  --card-bg: #FFFFFF;
+  --text: #1A1A2E;
+  --muted: #6B7280;
+  --border: #DCE3F5;
+  --primary: #7C3AED;
+  --primary-dark: #5B21B6;
+  --google-color: #EA4335;
+  --github-color: #24292F;
+
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg);
+  font-family: Arial, sans-serif;
+  color: var(--text);
+}
+
+/* Dark theme colors */
+.login-page.dark {
+  --bg: #1A1B2E;
+  --card-bg: #23243B;
+  --text: #F1F2F6;
+  --muted: #A0A3BD;
+  --border: #33344F;
+  --primary: #9F7AEA;
+  --primary-dark: #B794F4;
+}
+
+/* ============================= */
+/* Header + theme button         */
+/* ============================= */
+.login-header {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.theme-btn {
+  border: 2px solid var(--border);
+  background: var(--card-bg);
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* ============================= */
+/* Card                          */
+/* ============================= */
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  margin: 20px auto auto;
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 36px 32px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+.login-card h1 {
+  text-align: center;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  text-align: center;
+  color: var(--muted);
+  margin-bottom: 28px;
+}
+
+/* ============================= */
+/* Form fields                   */
+/* ============================= */
+.mb-3,
+.mb-4 {
+  margin-bottom: 18px;
+}
+
+label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* ============================= */
+/* Buttons                       */
+/* ============================= */
+.btn {
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+}
+
+.social-btn {
+  width: 100%;
+  margin-bottom: 12px;
+  border: 2px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+.google-btn {
+  color: var(--google-color);
+  border-color: var(--google-color);
+}
+
+.github-btn {
+  color: white;
+  background: var(--github-color);
+  border-color: var(--github-color);
+}
+
+/* ============================= */
+/* Divider                       */
+/* ============================= */
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 22px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 2px;
+  background: var(--border);
+}
+
+.divider span {
+  padding: 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ============================= */
+/* Links                         */
+/* ============================= */
+.forgot-link {
+  display: block;
+  text-align: center;
+  margin-top: 18px;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.signup-link {
+  text-align: center;
+  margin-top: 14px;
+  color: var(--muted);
+}
+
+.signup-link a {
+  color: var(--primary);
+  font-weight: bold;
+  text-decoration: none;
+}

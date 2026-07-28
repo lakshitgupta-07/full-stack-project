@@ -1,0 +1,63 @@
+<div class="container mt-5">
+
+    <div class="card shadow">
+
+        <div class="card-body text-center">
+
+            <h2 class="mb-4">
+
+                Email Verification
+
+            </h2>
+
+            <div *ngIf="isLoading">
+
+                <div
+                    class="spinner-border text-primary mb-3">
+                </div>
+
+                <p>
+
+                    Sending verification email...
+
+                </p>
+
+            </div>
+
+            <div
+                *ngIf="message"
+                class="alert alert-success">
+
+                {{ message }}
+
+                <hr>
+
+                <strong>
+
+                    {{ email }}
+
+                </strong>
+
+            </div>
+
+            <div
+                *ngIf="error"
+                class="alert alert-danger">
+
+                {{ error }}
+
+            </div>
+
+            <a
+                routerLink="/login"
+                class="btn btn-primary mt-3">
+
+                Back to Login
+
+            </a>
+
+        </div>
+
+    </div>
+
+</div>

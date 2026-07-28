@@ -1,0 +1,82 @@
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.col-lg-12 {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.col-lg-8 {
+  flex: 1 1 calc(65% - 20px);
+  min-width: 0;
+}
+
+.col-lg-4 {
+  flex: 1 1 calc(35% - 20px);
+  min-width: 300px;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0;
+  font-size: 0.875rem;
+}
+
+.table th,
+.table td {
+  white-space: nowrap;
+  vertical-align: middle;
+  padding: 0.6rem 0.75rem;
+}
+
+.table code {
+  font-family: monospace;
+  font-size: 0.8rem;
+  background-color: #148b9b;
+  color: #142b44;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.form-control,
+.form-select {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 992px) {
+
+  .col-lg-8,
+  .col-lg-4,
+  .col-lg-12 {
+    flex-basis: 100%;
+  }
+}

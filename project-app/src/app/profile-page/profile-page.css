@@ -1,0 +1,40 @@
+.page-header {
+  display: flex;
+  justify-content: space-between; 
+  align-items: center;            
+  width: 89%;                    
+  margin-bottom: 20px;            
+}
+.avatar-wrapper {
+    position: relative;
+    width: 150px;
+    margin: auto;
+}
+
+.profile-avatar {
+    width:150px;
+    height:150px;
+    border-radius:50%;
+    object-fit:cover;
+    border:4px solid #0d6efd;
+}
+
+.camera-icon{
+    position:absolute;
+    right:0;
+    bottom:0;
+
+    width:42px;
+    height:42px;
+
+    background:#0d6efd;
+    color:white;
+
+    border-radius:50%;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    cursor:pointer;
+}

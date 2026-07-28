@@ -1,0 +1,27 @@
+<div class="container mt-5 text-center">
+
+    <div *ngIf="loading">
+
+        <h3>Verifying Email...</h3>
+
+    </div>
+
+    <div
+        *ngIf="success"
+        class="alert alert-success">
+
+        Email verified successfully.
+
+        Redirecting to login...
+
+    </div>
+
+    <div
+        *ngIf="error"
+        class="alert alert-danger">
+
+        {{ error }}
+
+    </div>
+
+</div>

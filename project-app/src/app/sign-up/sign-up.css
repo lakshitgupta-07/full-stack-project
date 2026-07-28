@@ -1,0 +1,223 @@
+.sign-up-page {
+  --bg: #EAF0FF;
+  --card-bg: #FFFFFF;
+  --text: #1A1A2E;
+  --muted: #6B7280;
+  --border: #DCE3F5;
+  --primary: #7C3AED;
+  --primary-dark: #5B21B6;
+  --google-color: #EA4335;
+  --github-color: #24292F;
+  --success: #16A34A;
+  --danger: #DC2626;
+
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg);
+  font-family: Arial, sans-serif;
+  color: var(--text);
+}
+
+/* Dark theme colors */
+.sign-up-page.dark {
+  --bg: #1A1B2E;
+  --card-bg: #23243B;
+  --text: #F1F2F6;
+  --muted: #A0A3BD;
+  --border: #33344F;
+  --primary: #9F7AEA;
+  --primary-dark: #B794F4;
+  --success: #4ADE80;
+  --danger: #F87171;
+}
+
+/* ============================= */
+/* Header + theme button         */
+/* ============================= */
+.sign-up-header {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.theme-btn {
+  border: 2px solid var(--border);
+  background: var(--card-bg);
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.sign-up-card {
+  width: 100%;
+  max-width: 380px;
+  margin: 20px auto 40px;
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 36px 32px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+.sign-up-card h1 {
+  text-align: center;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  text-align: center;
+  color: var(--muted);
+  margin-bottom: 28px;
+}
+
+.mb-3, .mb-4 {
+  margin-bottom: 18px;
+}
+
+label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 6px 0 0;
+}
+
+/* ============================= */
+/* Password rules checklist      */
+/* ============================= */
+.password-rules {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+}
+
+.password-rules li {
+  font-size: 13px;
+  color: var(--danger);
+  margin-bottom: 4px;
+  padding-left: 20px;
+  position: relative;
+}
+
+.password-rules li::before {
+  content: "✕";
+  position: absolute;
+  left: 0;
+  font-weight: bold;
+}
+
+.password-rules li.valid {
+  color: var(--success);
+}
+
+.password-rules li.valid::before {
+  content: "✓";
+}
+
+
+.btn {
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.social-btn {
+  width: 100%;
+  margin-bottom: 12px;
+  border: 2px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+.google-btn {
+  color: var(--google-color);
+  border-color: var(--google-color);
+}
+
+.github-btn {
+  color: white;
+  background: var(--github-color);
+  border-color: var(--github-color);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 22px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 2px;
+  background: var(--border);
+}
+
+.divider span {
+  padding: 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+
+.signup-link {
+  text-align: center;
+  margin-top: 14px;
+  color: var(--muted);
+}
+
+.signup-link a {
+  color: var(--primary);
+  font-weight: bold;
+  text-decoration: none;
+}

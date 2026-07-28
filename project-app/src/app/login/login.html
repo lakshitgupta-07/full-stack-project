@@ -1,0 +1,85 @@
+<div class="login-page" [class.dark]="isDarkMode">
+
+  <header class="login-header">
+
+    <button class="theme-btn" (click)="toggleTheme()">
+
+      {{ isDarkMode ? '☀️' : '🌙' }}
+
+    </button>
+
+  </header>
+
+  <div class="login-card">
+
+    <h1>Welcome Back</h1>
+
+    <p class="subtitle">
+      Sign in to continue
+    </p>
+
+    <form #loginForm="ngForm" (ngSubmit)="onLogin(loginForm)">
+
+      <div class="mb-3">
+
+        <label>Email</label>
+
+        <input class="form-control" type="email" name="email" ngModel required>
+
+      </div>
+
+      <div class="mb-4">
+
+        <label>Password</label>
+
+        <input class="form-control" type="password" name="password" ngModel required>
+
+      </div>
+
+      <button class="btn btn-primary w-100" type="submit">
+
+        Login
+
+      </button>
+
+    </form>
+
+    <div class="divider">
+
+      <span>OR</span>
+
+    </div>
+
+    <button class="btn social-btn google-btn" (click)="loginWithGoogle()">
+
+      Continue with Google
+
+    </button>
+
+    <button class="btn social-btn github-btn" (click)="loginWithGithub()">
+
+      Continue with GitHub
+
+    </button>
+
+    <a routerLink="/forgot-password" class="forgot-link">
+
+      Forgot Password?
+
+    </a>
+
+    <p class="signup-link">
+
+      Don't have an account?
+
+      <a routerLink="/signUp">
+
+        Sign Up
+
+      </a>
+
+    </p>
+
+  </div>
+
+</div>

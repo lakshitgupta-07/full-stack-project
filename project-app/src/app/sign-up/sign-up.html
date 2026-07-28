@@ -1,0 +1,134 @@
+<div class="sign-up-page" [class.dark]="isDarkMode">
+
+  <!-- Header -->
+  <header class="sign-up-header">
+
+    <button class="theme-btn" (click)="toggleTheme()">
+
+      {{ isDarkMode ? '☀️' : '🌙' }}
+
+    </button>
+
+  </header>
+
+  <div class="sign-up-card">
+
+    <h1>Create Account</h1>
+
+    <p class="subtitle">
+      Sign up to get started
+    </p>
+
+    <form [formGroup]="signUpForm" (ngSubmit)="onSubmit()">
+
+      <div class="mb-3">
+
+        <label>Email</label>
+
+        <input class="form-control" type="text" placeholder="Enter Email" formControlName="email" />
+
+      </div>
+
+      <div class="mb-3">
+
+        <label>Password</label>
+
+        <input class="form-control" type="password" placeholder="Set Password" formControlName="password" />
+
+        <ul class="password-rules">
+
+          <li [class.valid]="!signUpForm.get('password')?.hasError('missingDigit')">
+            Must have a digit
+          </li>
+
+          <li [class.valid]="!signUpForm.get('password')?.hasError('missingSpecial')">
+            Must have a special character
+          </li>
+
+          <li [class.valid]="!signUpForm.get('password')?.hasError('missingUpperCase')">
+            Must have a capital letter
+          </li>
+
+          <li [class.valid]="!signUpForm.get('password')?.hasError('missingLowerCase')">
+            Must have a lowercase letter
+          </li>
+
+          <li [class.valid]="!signUpForm.get('password')?.hasError('missingLength')">
+            At least 8 characters
+          </li>
+
+        </ul>
+      </div>
+
+      <div class="mb-4">
+
+        <label>Confirm Password</label>
+
+        <input class="form-control" type="password" placeholder="Confirm Password" formControlName="confirmPassword" />
+
+        <p class="field-error" *ngIf="
+            signUpForm.get('confirmPassword')?.touched &&
+            signUpForm.get('confirmPassword')?.hasError('required')
+          ">
+          Confirm password is required
+        </p>
+
+        <p class="field-error" *ngIf="
+            signUpForm.get('confirmPassword')?.touched && signUpForm.errors?.['passwordMismatch']
+          ">
+          Password doesn't match
+        </p>
+
+      </div>
+
+      <div class="mb-4">
+
+        <label>Phone Number</label>
+
+        <input class="form-control" type="text" placeholder="Enter Phone Number" formControlName="phoneNumber" />
+
+      </div>
+
+      <button class="btn btn-primary w-100" type="submit" [disabled]="signUpForm.invalid || isLoading">
+        @if (isLoading) {
+          Signing Up..
+        } @else {
+          Sign Up
+        }
+      </button>
+
+    </form>
+
+    <div class="divider">
+
+      <span>OR</span>
+
+    </div>
+
+    <button class="btn social-btn google-btn" (click)="signUpWithGoogle()">
+
+      Sign up with Google
+
+    </button>
+
+    <button class="btn social-btn github-btn" (click)="signUpWithGithub()">
+
+      Sign up with GitHub
+
+    </button>
+
+    <p class="signup-link">
+
+      Already have an account?
+
+      <a routerLink="/login">
+
+        Log In
+
+      </a>
+
+    </p>
+
+  </div>
+
+</div>
