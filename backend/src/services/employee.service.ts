@@ -2,6 +2,7 @@ import { isValidObjectId } from "mongoose";
 import { Employee } from "../models/employee.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { CreateEmployeeInput, createEmployeeSchema, UpdateEmployeeInput, updateEmployeeSchema, } from "../validators/employee.validator.js";
+import { faker } from "@faker-js/faker";
 
 interface EmployeeQuery {
   page?: number;
@@ -156,7 +157,6 @@ export const deleteEmployeeService = async (id: string) => {
   return employee;
 };
 
-import { faker } from "@faker-js/faker";
 
 export const bulkCreateEmployeesService = async (
   createdBy: string

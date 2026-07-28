@@ -1,6 +1,4 @@
 import { Schema, model } from "mongoose";
-import { v4 as uuidv4 } from "uuid";
-
 export interface IEmployee {
     employeeId: string;
     fullName: string;

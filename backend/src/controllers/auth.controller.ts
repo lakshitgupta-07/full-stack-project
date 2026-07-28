@@ -1,13 +1,8 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import {
-    loginUserService, logoutUserService, refreshAccessTokenService, registerUserService, resetPasswordService,
-    forgotPasswordService, verifyEmailService, resendVerificationService, googleLoginService,
-    googleCallbackService, generateAccessAndRefreshTokensService,
-    githubLoginService,
-    githubCallbackService
-} from "../services/auth.service.js";
+import { loginUserService, logoutUserService, refreshAccessTokenService, registerUserService, resetPasswordService, forgotPasswordService, verifyEmailService, 
+resendVerificationService, googleLoginService, googleCallbackService, generateAccessAndRefreshTokensService, githubLoginService, githubCallbackService } from "../services/auth.service.js";
 import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema, resendVerificationSchema } from "../validators/auth.validator.js";
 import { ApiError } from "../utils/ApiError.js";
 
@@ -131,21 +126,11 @@ export const githubLogin = asyncHandler(async (req: Request, res: Response) => {
 
 export const githubCallback = asyncHandler(async (req: Request, res: Response) => {
     const code = req.query.code as string
-    console.log("1. Code:", code);
-
     const user = await githubCallbackService(code)
-    console.log("2. User:", user);
-
-    console.log("3. User ID:", user._id);
-
     const {accessToken, refreshToken} = await generateAccessAndRefreshTokensService(user._id.toString())
-        console.log("4. Tokens:", accessToken, refreshToken);
-
     const options = {
         httpOnly: true,
         secure: false
     }
-        console.log("5. Redirecting");
-
     res.cookie("accessToken", accessToken, options).cookie("refreshToken", refreshToken, options).redirect(`${process.env.CLIENT_URL}/homePage`)
 })

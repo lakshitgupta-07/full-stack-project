@@ -1,12 +1,6 @@
 import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
-import {
-  ForgotPasswordInput,
-  LoginInput,
-  ResetPasswordInput,
-  RegisterInput,
-  resendVerificationInput,
-} from "../validators/auth.validator.js";
+import { ForgotPasswordInput, LoginInput, ResetPasswordInput, RegisterInput, resendVerificationInput, } from "../validators/auth.validator.js";
 import logger from "../config/logger.js";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import crypto from "node:crypto";
@@ -18,7 +12,6 @@ import { channels } from "../redis/channels.redis.js";
 import axios from "axios";
 
 export const registerUserService = async ({
-  //username,
   phoneNumber,
   email,
   password,
@@ -102,7 +95,7 @@ export const loginUserService = async (data: LoginInput) => {
     throw new ApiError(401, "User does'nt exists");
   }
   if (!user.isEmailVerified) {
-    throw new ApiError(403, "Please verify email");
+    throw new ApiError(403, "Email not verified, Link already sent on registered email");
   }
   if (!user.password) {
     throw new ApiError(400, "Please set a password before using email login");
@@ -337,6 +330,7 @@ export const googleCallbackService = async (code: string) => {
 const GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize";
 const GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token";
 const GITHUB_API_URL = "https://api.github.com";
+
 export const githubLoginService = async() => {
   const params = new URLSearchParams({
     client_id: process.env.GITHUB_CLIENT_ID!,

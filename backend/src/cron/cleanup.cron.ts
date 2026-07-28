@@ -5,7 +5,6 @@ import logger from "../config/logger.js";
 cron.schedule("0 0 * * *", async () => {
     logger.info("Running DB cleanup");
     try{
-        
         const user = await User.updateMany({
             passwordResetExpiry: {
                 $lt: new Date(),
@@ -21,5 +20,4 @@ cron.schedule("0 0 * * *", async () => {
     } catch(err: any) {
         logger.error("Cleanup failed: ", err.message)
     }
-    
 })

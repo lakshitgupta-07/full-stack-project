@@ -16,7 +16,6 @@ export const createBannerSchema = z.object({
     .optional(),
 
   isActive: z.boolean().optional(),
-  // createdBy: z.any(),
   startDate: z.coerce.date().optional(),
 
   endDate: z.coerce.date().optional(),

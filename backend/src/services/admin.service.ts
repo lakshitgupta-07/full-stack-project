@@ -49,6 +49,16 @@ export const getDashboardStatsService = async () => {
             $count: "count",
           },
         ],
+        githubUser: [
+          {
+            $match: {
+              provider: "github",
+            }
+          },
+          {
+            $count: "count"
+          }
+        ],
         adminUsers: [
           {
             $match: {
