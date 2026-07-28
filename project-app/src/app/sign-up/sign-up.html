@@ -1,6 +1,5 @@
 <div class="sign-up-page" [class.dark]="isDarkMode">
 
-  <!-- Header -->
   <header class="sign-up-header">
 
     <button class="theme-btn" (click)="toggleTheme()">
@@ -29,43 +28,59 @@
 
       </div>
 
-      <div class="mb-3">
+      <div class="mb-3 password-wrapper">
 
         <label>Password</label>
+        <div>
+          <input class="form-control" [type]="showPassword ? 'text' : 'password'" placeholder="Set Password"
+            formControlName="password" (focus)="showPasswordChecklist = true" (blur)="showPasswordChecklist = false" />
+          <button type="button" class="eye-btn" (click)="showPassword = !showPassword">
+            {{ showPassword ? '🙈' : '👁️' }}
+          </button>
+        </div>
+        <div class="password-popover" *ngIf="showPasswordChecklist">
+          <ul class="password-rules">
 
-        <input class="form-control" type="password" placeholder="Set Password" formControlName="password" />
+            <li [class.valid]="!signUpForm.get('password')?.hasError('missingDigit')">
+              Must have a digit
+            </li>
 
-        <ul class="password-rules">
+            <li [class.valid]="!signUpForm.get('password')?.hasError('missingSpecial')">
+              Must have a special character
+            </li>
 
-          <li [class.valid]="!signUpForm.get('password')?.hasError('missingDigit')">
-            Must have a digit
-          </li>
+            <li [class.valid]="!signUpForm.get('password')?.hasError('missingUpperCase')">
+              Must have a capital letter
+            </li>
 
-          <li [class.valid]="!signUpForm.get('password')?.hasError('missingSpecial')">
-            Must have a special character
-          </li>
+            <li [class.valid]="!signUpForm.get('password')?.hasError('missingLowerCase')">
+              Must have a lowercase letter
+            </li>
 
-          <li [class.valid]="!signUpForm.get('password')?.hasError('missingUpperCase')">
-            Must have a capital letter
-          </li>
+            <li [class.valid]="!signUpForm.get('password')?.hasError('missingLength')">
+              At least 8 characters
+            </li>
 
-          <li [class.valid]="!signUpForm.get('password')?.hasError('missingLowerCase')">
-            Must have a lowercase letter
-          </li>
-
-          <li [class.valid]="!signUpForm.get('password')?.hasError('missingLength')">
-            At least 8 characters
-          </li>
-
-        </ul>
+          </ul>
+        </div>
       </div>
 
       <div class="mb-4">
 
         <label>Confirm Password</label>
 
-        <input class="form-control" type="password" placeholder="Confirm Password" formControlName="confirmPassword" />
+        <div class="password-input">
 
+          <input class="form-control" [type]="showConfirmPassword ? 'text' : 'password'" placeholder="Confirm Password"
+            formControlName="confirmPassword">
+
+          <button type="button" class="eye-btn-confirmPassword" (click)="showConfirmPassword=!showConfirmPassword">
+
+            {{showConfirmPassword ? '🙈' : '👁️'}}
+
+          </button>
+
+        </div>
         <p class="field-error" *ngIf="
             signUpForm.get('confirmPassword')?.touched &&
             signUpForm.get('confirmPassword')?.hasError('required')
@@ -91,9 +106,9 @@
 
       <button class="btn btn-primary w-100" type="submit" [disabled]="signUpForm.invalid || isLoading">
         @if (isLoading) {
-          Signing Up..
+        Signing Up..
         } @else {
-          Sign Up
+        Sign Up
         }
       </button>
 

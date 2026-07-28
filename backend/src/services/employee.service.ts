@@ -3,7 +3,6 @@ import { Employee } from "../models/employee.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { CreateEmployeeInput, createEmployeeSchema, UpdateEmployeeInput, updateEmployeeSchema, } from "../validators/employee.validator.js";
 import { faker } from "@faker-js/faker";
-
 interface EmployeeQuery {
   page?: number;
   limit?: number;
@@ -12,7 +11,7 @@ interface EmployeeQuery {
   status?: string;
   sortBy?: string;
   sortOrder?: Number;
-}
+};
 
 export const createEmployeeService = async (data: CreateEmployeeInput) => {
   const validatedData = createEmployeeSchema.parse(data);

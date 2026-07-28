@@ -10,7 +10,6 @@ userRouter.use(verifyJwt)
 userRouter.get("/me", getCurrentUser)
 userRouter.patch("/me", updateCurrentUser)
 userRouter.patch("/change-password", changePassword);
-
 userRouter.patch("/avatar", upload.single("avatar"), updateAvatar);
 
 export default userRouter;

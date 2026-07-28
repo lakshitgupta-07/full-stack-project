@@ -19,6 +19,7 @@ export class Login {
   private userService = inject(UserService)
   isDarkMode = false;
   isLoading = false;
+  showPassword = false;
   onLogin(form: NgForm): void {
     if (form.invalid || this.isLoading) return;
     this.isLoading = true;

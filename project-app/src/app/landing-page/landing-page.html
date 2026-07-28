@@ -1,12 +1,12 @@
-<div class="landingPage">
+<div class="landingPage" [class.dark]="isDarkMode">
 
-  <button class="theme-btn btn btn-dark" (click)="toggleTheme()">
+  <button class="theme-btn" (click)="toggleTheme()">
     {{ isDarkMode ? '☀️' : '🌙' }}
   </button>
 
   <h1>Login or SignUp</h1>
 
-  <div>
+  <div class="tab-container">
     <button routerLink="/login" routerLinkActive="active-btn">LogIn</button>
     <button routerLink="/signUp" routerLinkActive="active-btn">SignUp</button>
   </div>

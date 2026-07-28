@@ -20,7 +20,6 @@
   color: var(--text);
 }
 
-/* Dark theme colors */
 .sign-up-page.dark {
   --bg: #1A1B2E;
   --card-bg: #23243B;
@@ -33,9 +32,6 @@
   --danger: #F87171;
 }
 
-/* ============================= */
-/* Header + theme button         */
-/* ============================= */
 .sign-up-header {
   width: 100%;
   display: flex;
@@ -99,6 +95,36 @@ label {
   box-sizing: border-box;
 }
 
+.password-wrapper {
+  position: relative;
+}
+
+.password-popover {
+  position:absolute;
+  top: 34px;
+  left: 105%;
+  width: 200px;
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .25);
+  z-index: 100;
+}
+
+.password-popover::before {
+  content: "";
+  position: absolute;
+  left:-8px;
+  top: 22px;
+  width: 16px;
+  height: 16px;
+  background: var(--card-bg);
+  border-left: 2px solid var(--border);
+  border-bottom: 2px solid var(--border);
+  transform: rotate(45deg);
+}
+
 .form-control:focus {
   outline: none;
   border-color: var(--primary);
@@ -110,16 +136,14 @@ label {
   margin: 6px 0 0;
 }
 
-/* ============================= */
-/* Password rules checklist      */
-/* ============================= */
 .password-rules {
   list-style: none;
   padding: 0;
-  margin: 8px 0 0;
+  margin: 0;
 }
 
 .password-rules li {
+  color:var(--danger);
   font-size: 13px;
   color: var(--danger);
   margin-bottom: 4px;
@@ -142,6 +166,48 @@ label {
   content: "✓";
 }
 
+.password-input {
+  position: relative;
+}
+
+.password-input input {
+  padding-right: 40px;
+}
+
+.eye-btn{
+  position: absolute;
+  right: -10px;
+  top: 30px;
+  bottom: 10px;
+  transform: translate(-50%);
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 18px;
+  color:var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.eye-btn-confirmPassword {
+  position: absolute;
+  right: -10px;
+  top: 10px;
+  bottom: 10px;
+  transform: translate(-50%);
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 18px;
+  color:var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.eye-btn:hover {
+  color:var(--primary);
+}
 
 .btn {
   padding: 12px;

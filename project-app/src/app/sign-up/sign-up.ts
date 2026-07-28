@@ -20,7 +20,10 @@ export class SignUp implements OnInit {
   isDarkMode = false;
   private formBuilder =  inject(FormBuilder)
   private route = inject(Router)
-    private authService = inject(AuthService)
+  private authService = inject(AuthService)
+  showPasswordChecklist = false 
+  showPassword = false
+  showConfirmPassword = false
   constructor(
     private themeService: ThemeService
   ) { 
@@ -32,7 +35,6 @@ export class SignUp implements OnInit {
   ngOnInit(): void {
     this.signUpForm = this.formBuilder.group(
       {
-        //username: ['', [Validators.required]],
         password: ['', [Validators.required, ValidatePasswordPatternValidator]],
         confirmPassword: ['', [Validators.required]],
         email: ['', [Validators.required, Validators.email]],
@@ -47,7 +49,7 @@ export class SignUp implements OnInit {
         ],
       },
       {
-        validators: [ConfirmPasswordValidator, /*ContainsUsername*/],
+        validators: [ConfirmPasswordValidator,],
       },
     );
   }

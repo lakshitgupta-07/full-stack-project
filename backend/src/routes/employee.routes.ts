@@ -1,9 +1,6 @@
 import { Router } from "express";
-
-import {
-    createEmployeeController, bulkCreateEmployees, getEmployeeByIdController, getEmployeeController, updateEmployeeController,
-    deleteEmployeeController
-} from "../controllers/employee.controller.js";
+import { createEmployeeController, bulkCreateEmployees, getEmployeeByIdController, getEmployeeController, 
+updateEmployeeController, deleteEmployeeController } from "../controllers/employee.controller.js";
 import { verifyJwt } from "../middlewares/auth.middleware.js";
 import { verifyAdmin } from "../middlewares/adminAuth.middleware.js";
 

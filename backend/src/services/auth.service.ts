@@ -11,6 +11,10 @@ import { publish } from '../redis/publisher.redis.js'
 import { channels } from "../redis/channels.redis.js";
 import axios from "axios";
 
+const GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize";
+const GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token";
+const GITHUB_API_URL = "https://api.github.com";
+
 export const registerUserService = async ({
   phoneNumber,
   email,
@@ -327,10 +331,6 @@ export const googleCallbackService = async (code: string) => {
   return user;
 };
 
-const GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize";
-const GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token";
-const GITHUB_API_URL = "https://api.github.com";
-
 export const githubLoginService = async() => {
   const params = new URLSearchParams({
     client_id: process.env.GITHUB_CLIENT_ID!,
@@ -420,7 +420,7 @@ export const githubCallbackService = async (code: string) => {
     }
   }
   return user
-}
+};
 
 export const generateAccessAndRefreshTokensService = async (userId: string) => {
   try {
