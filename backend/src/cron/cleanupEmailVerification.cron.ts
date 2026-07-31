@@ -2,7 +2,7 @@ import cron from 'node-cron'
 import { User } from '../models/user.model.js'
 import logger from '../config/logger.js'
 
-cron.schedule("* * * * *", async () => {
+cron.schedule("0 0 * * *", async () => {
     logger.info("Running DB cleanup");
     try {
         const user = await User.updateMany({
