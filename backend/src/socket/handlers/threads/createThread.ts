@@ -23,7 +23,7 @@ export const createThread = async(
         }
     })
     if(existingThread) {
-        throw new Error("Thread already exist")
+        return existingThread
     }
     const thread = await Thread.create({
         participants: [

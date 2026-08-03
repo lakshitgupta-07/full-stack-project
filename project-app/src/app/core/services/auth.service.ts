@@ -2,7 +2,7 @@ import { Injectable, inject } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 
 import { Observable } from "rxjs";
-
+import { SocketService } from "./socket.service";
 import { environment } from "../../../environment/envirenment"
 
 import {
@@ -12,6 +12,7 @@ import {
   LoginRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
+  LoginResponse,
 } from "../models/auth.model";
 
 @Injectable({
@@ -19,7 +20,6 @@ import {
 })
 export class AuthService {
   private http = inject(HttpClient);
-
   register(
     data: RegisterRequest
   ): Observable<ApiResponse<authUser>> {
@@ -43,8 +43,8 @@ export class AuthService {
 
   login(
     data: LoginRequest
-  ): Observable<ApiResponse<authUser>> {
-    return this.http.post<ApiResponse<authUser>>(
+  ): Observable<ApiResponse<LoginResponse>> {
+    return this.http.post<ApiResponse<LoginResponse>>(
       `${environment.apiUrl}/auth/login`,
       data,
       {

@@ -11,6 +11,11 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+export interface LoginResponse {
+  user:  authUser,
+  accessToken: string
+}
+
 export interface authUser {
   skills: any;
   address: any;

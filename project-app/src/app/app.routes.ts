@@ -10,6 +10,7 @@ import { ChangePasswordComponent } from './change-password/change-password';
 import { ParentComponent } from './parent-component/parent-component';
 import { ResendVerification } from './resend-verification/resend-verification';
 import { guestGuard } from './core/guards/guest-guard-guard';
+import { ChatPage } from './chat/chat-page/chat-page';
 
 export const routes: Routes = [
   {
@@ -21,6 +22,10 @@ export const routes: Routes = [
   { path: 'login', component: Login, canActivate: [guestGuard], },
   { path: 'signUp', component: SignUp, canActivate: [guestGuard], },
   { path: 'verify-email/:token', component: VerifyEmailComponent },
+  {
+    path: 'connect',
+    loadComponent: () => import("./connect/connect").then(m => m.Connect)
+  },
   {
     path: 'forgot-password',
     loadComponent: () => import('./forgot-password/forgot-password').then((m) => m.ForgotPasswordComponent),
@@ -40,6 +45,11 @@ export const routes: Routes = [
     path: 'homePage',
     loadComponent: () => import('./home-page/home-page').then((m) => m.HomePage),
     canActivate: [authGuard],
+  },
+  {
+    path: 'chat',
+    component: ChatPage,
+    canActivate: [authGuard]
   },
   {
     path: 'change-password',

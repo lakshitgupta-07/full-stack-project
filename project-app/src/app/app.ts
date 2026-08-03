@@ -17,14 +17,13 @@ export class App {
       this.isDarkMode = mode;
     })
   }
-  ngOnInit(): void {
-    this.socketService.connect()
-    this.socketService.listen(
-      "userRegistered",
-      (data) => {
-        console.log("New User Registered", data);
-
-      }
-    )
-  }
+  // ngOnInit(): void {
+  //   this.socketService.connect()
+  //   this.socketService.listen(
+  //     "userRegistered",
+  //     (data) => {
+  //       console.log("New User Registered", data);
+  //     }
+  //   )
+  // }
 }

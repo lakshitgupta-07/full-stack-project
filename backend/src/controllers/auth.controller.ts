@@ -116,7 +116,7 @@ export const googleCallback = asyncHandler(async (req: Request, res: Response) =
     res
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
-        .redirect(`${process.env.CLIENT_URL}/homePage`);
+        .redirect(`${process.env.CLIENT_URL}/connect`);
 })
 
 export const githubLogin = asyncHandler(async (req: Request, res: Response) => {
@@ -132,5 +132,5 @@ export const githubCallback = asyncHandler(async (req: Request, res: Response) =
         httpOnly: true,
         secure: false
     }
-    res.cookie("accessToken", accessToken, options).cookie("refreshToken", refreshToken, options).redirect(`${process.env.CLIENT_URL}/homePage`)
+    res.cookie("accessToken", accessToken, options).cookie("refreshToken", refreshToken, options).redirect(`${process.env.CLIENT_URL}/connect`)
 })

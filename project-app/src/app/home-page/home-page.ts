@@ -9,6 +9,7 @@ import { AuthService } from '../core/services/auth.service';
 import { AuthStateService } from '../core/services/auth-state.service';
 import { UserService } from '../core/services/user.service';
 import { Employee } from '../core/models/employee.model';
+import { SocketService } from '../core/services/socket.service';
 
 @Component({
   selector: 'app-home-page',
@@ -23,7 +24,8 @@ export class HomePage {
     private getAPI: GetApi,
     private authService: AuthService,
     private authState: AuthStateService,
-    private userService: UserService
+    private userService: UserService,
+    private socketService: SocketService
   ) { }
 
   searchQuery = '';
@@ -181,8 +183,9 @@ export class HomePage {
   logOut(): void {
     this.authService.logout().subscribe({
       next: () => {
+        this.socketService.disconnect()
         this.authState.setUser(null);
-        this.userService.currentUser = null;
+        this.userService.currentUser.set(null);
         this.route.navigate(['/login']);
       },
       error: (error) => {

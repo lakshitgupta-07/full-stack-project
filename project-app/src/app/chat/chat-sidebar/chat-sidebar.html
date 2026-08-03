@@ -1,0 +1,27 @@
+<div class="sidebar-header">
+    <h1>CHATS</h1>
+    <button class="new-chat-btn" (click)="showDialog = true">
+        New Chat
+    </button>
+</div>
+
+<div>
+    <input type="text" placeholder="search..." [(ngModel)]="searchQuery" />
+</div>
+
+
+<div class="thread-list">
+    @for(thread of filteredThreads; track thread._id) {
+    <!-- <img [src]="getOtherParticipants(thread)?.avatar?.url"> -->
+    <div class="thread-item" (click)="selectThread(thread)">
+        <h4>
+            {{getOtherParticipants(thread)?.username}}
+        </h4>
+    </div>
+} @empty {
+    <div class="thread-item">
+        No Conversation
+    </div>
+}
+</div>
+<app-new-chat-dialog *ngIf="showDialog" (close)="showDialog = false"></app-new-chat-dialog>

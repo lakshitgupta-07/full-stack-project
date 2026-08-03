@@ -36,6 +36,7 @@ const threadSchema = new Schema<IThread>(
             type: Date,
             default: null
         },
+        // lastMessageType: {},
     },
     {
         timestamps: true,

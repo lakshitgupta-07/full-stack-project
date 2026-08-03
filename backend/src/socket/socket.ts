@@ -4,18 +4,20 @@ import { socketAuth } from "./socketAuth.js";
 import { registerChatEvents } from "./chat.socket.js";
 import { AuthenticatedSocket } from "../types/authenticated-socket.js";
 import { createThread } from "./handlers/threads/createThread.js";
-import { success } from "zod";
 import { acceptThread } from "./handlers/threads/acceptThread.js";
 import { sendMessage } from "./handlers/message/sendMessage.js";
 import { getMessageThread } from "./handlers/message/getThreadMessage.js";
-import { threadId } from "worker_threads";
+import { addUser, removeUser, getOnlineUsers } from "./presence/presence.js";
 // import { markSeen } from "./handlers/markSeen.handler.js";
-// import { messageDelivered } from "./handlers/messageDelivered.handler.js";
+import { markSeen } from "./handlers/message/markSeen.js";
+import { messageDelivered } from "./handlers/message/messageDelivered.js";
+import { success } from "zod";
+import { getMyThread } from "./handlers/threads/getMyThreads.js";
 
 let io: Server;
 
 export const initializeSocket = (server: HttpServer) => {
-        console.log("Initializing Socket.IO...");
+    console.log("Initializing Socket.IO...");
 
     io = new Server(server, {
         cors: {
@@ -27,16 +29,32 @@ export const initializeSocket = (server: HttpServer) => {
     io.on("connection", (socket) => {
         const authSocket = socket as AuthenticatedSocket
         socket.join(authSocket.user._id.toString())
+        addUser(
+            authSocket.user._id.toString(),
+            socket.id
+        )
+        io.emit(
+            "user-online",
+            {
+                userId: authSocket.user._id,
+                username: authSocket.user.username
+            }
+        )
+        socket.emit(
+            "online-users",
+            getOnlineUsers()
+        )
         console.log(`${authSocket.user.username} joined room ${authSocket.user._id.toString()}`);
         authSocket.on(
             "create-thread",
-            async(payload, callback) => {
+            async (payload, callback) => {
                 try {
                     const threadRequest = await createThread(authSocket, payload)
                     callback({
                         success: true,
                         message: threadRequest
                     })
+                    console.log("Create thread received", payload)
                 } catch (err: any) {
                     callback({
                         success: false,
@@ -47,12 +65,31 @@ export const initializeSocket = (server: HttpServer) => {
         )
         authSocket.on(
             "accept-thread",
-            async(payload, callback) => {
+            async (payload, callback) => {
                 try {
                     const acceptedThread = await acceptThread(authSocket, payload)
                     callback({
                         success: true,
                         thread: acceptedThread
+                    })
+                    console.log("Thread accepted", payload)
+                } catch (err: any) {
+                    callback({
+                        success: false,
+                        error: err.message
+                    })
+                }
+            }
+        )
+        authSocket.on(
+            "get-my-thread",
+            async (_, callback) => {
+                try {
+                    const threads = await getMyThread(authSocket)
+
+                    callback({
+                        success: true,
+                        threads
                     })
                 } catch (err: any) {
                     callback({
@@ -65,12 +102,12 @@ export const initializeSocket = (server: HttpServer) => {
         registerChatEvents(authSocket)
         authSocket.on(
             "send-message",
-            async(payload, callback) => {
+            async (payload, callback) => {
                 try {
                     const textMessage = await sendMessage(authSocket, payload);
                     callback({
                         success: true,
-                        textMessage
+                        message: textMessage
                     })
                 } catch (err: any) {
                     callback({
@@ -81,8 +118,46 @@ export const initializeSocket = (server: HttpServer) => {
             }
         )
         authSocket.on(
+            "message-delivered",
+            async (payload, callback) => {
+                try {
+                    const message = await messageDelivered(authSocket, payload)
+                    callback({
+                        success: true,
+                        message
+                    })
+                } catch (err: any) {
+                    callback({
+                        success: false,
+                        error: err.message
+                    })
+                }
+            }
+        )
+        authSocket.on(
+            "mark-seen",
+            async (payload, callback) => {
+                try {
+                    const message = await markSeen(authSocket, payload)
+                    if (callback) {
+                        callback({
+                            success: true,
+                            message
+                        })
+                    }
+                } catch (err: any) {
+                    if (callback) {
+                        callback({
+                            success: false,
+                            error: err.message
+                        })
+                    }
+                }
+            }
+        )
+        authSocket.on(
             "get-thread-message",
-            async(payload, callback) => {
+            async (payload, callback) => {
                 try {
                     const message = await getMessageThread(authSocket, payload)
                     callback({
@@ -101,7 +176,7 @@ export const initializeSocket = (server: HttpServer) => {
             "join-thread",
             (
                 payload: {
-                threadId: string;
+                    threadId: string;
                 },
                 callback
             ) => {
@@ -145,13 +220,24 @@ export const initializeSocket = (server: HttpServer) => {
             }
         )
         socket.on("disconnect", () => {
-            console.log(`Socket disconnected: ${socket.id}`);
+            removeUser(
+                authSocket.user._id.toString(),
+                socket.id
+            );
+            io.emit(
+                "user-offline",
+                {
+                    userId: authSocket.user._id,
+                    username: authSocket.user.username
+                }
+            );
+            console.log(`${authSocket.user.username} disconnected`)
         });
     });
 };
 
 export const getIO = () => {
-    if(!io) {
+    if (!io) {
         throw new Error("Socket.ID not intialized")
     }
     return io;

@@ -1,0 +1,92 @@
+@if(chatService.selectedThread(); as thread) {
+<div class="chat-header">
+  <h3>{{ getOtherParticipants(thread)?.username }}</h3>
+</div>
+
+<div class="messages-container">
+  @if(thread.status === 'pending') {
+  <div class="pending-overlay">
+    @if(thread.createdBy._id === currentUser?._id) {
+    <div class="pending-card">
+      <span class="status-icon">🕒</span>
+      <h4>Request Pending</h4>
+      <p>Waiting for {{ getOtherParticipants(thread)?.username }} to accept your chat request.</p>
+    </div>
+    } @else {
+    <div class="pending-card accept-card">
+      <span class="status-icon">✉️</span>
+      <h4>New Chat Request</h4>
+      <p>{{ getOtherParticipants(thread)?.username }} wants to start a conversation with you.</p>
+      <button class="accept-btn" (click)="acceptThread(thread)">
+        Accept Request
+      </button>
+    </div>
+    }
+  </div>
+  } @else {
+  <div class="chat-messages">
+    @for(msg of chatService.messages(); track msg._id) {
+    <div class="message-row"
+      [ngClass]="{'sent': msg.sender._id === currentUser?._id, 'received': msg.sender._id !== currentUser?._id}">
+      <div class="message-bubble">
+        <p>{{ msg.textMessage }}</p>
+        <div class="msg-meta">
+          <span class="msg-time">{{ msg.createdAt | date:'shortTime' }}</span>
+          <!-- @if(msg.sender._id === currentUser?._id) {
+            <span class="status" [ngClass]="msg.status">
+              @switch(msg.status) {
+                @case('sent') {
+                  ✓
+                }
+                @case('delivered') {
+                  ✓✓
+                }
+                @case('read') {
+                  ✓✓
+                }
+              }
+            </span>
+          } -->
+        </div>
+      </div>
+    </div>
+    } @empty {
+    <div class="no-messages">
+      <span class="chat-icon">💬</span>
+      <p>No messages yet. Say hi!</p>
+    </div>
+    }
+  </div>
+  }
+</div>
+
+@if(thread.status === 'active') {
+<div class="message-input-bar">
+  @if(chatService.selectedThread()){
+
+  @if(chatService.typingUsers()[chatService.selectedThread()!._id]){
+
+  <div class="typing">
+
+    {{
+    chatService.typingUsers()[chatService.selectedThread()!._id]
+    }}
+
+    is typing...
+
+  </div>
+
+  }
+
+  }
+  <input type="text" placeholder="Type a message..." [(ngModel)]="newMessageText" (input)="onTyping() "
+    (keydown.enter)="sendMessage()">
+  <button class="send-btn" (click)="sendMessage()">Send</button>
+</div>
+}
+} @else {
+<div class="no-conversation-selected">
+  <span class="select-icon">💬</span>
+  <h2>Select a conversation to start chatting</h2>
+</div>
+}

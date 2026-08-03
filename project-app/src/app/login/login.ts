@@ -5,7 +5,8 @@ import { RouterLink } from '@angular/router';
 import { ThemeService } from '../core/services/theme';
 import { AuthService } from '../core/services/auth.service';
 import { UserService } from '../core/services/user.service';
-
+import { SocketService } from '../core/services/socket.service';
+import { ChatService } from '../core/services/chat.service';
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -16,22 +17,27 @@ import { UserService } from '../core/services/user.service';
 export class Login {
   private router = inject(Router);
   private authService = inject(AuthService);
-  private userService = inject(UserService)
+  private userService = inject(UserService);
+  private socketService = inject(SocketService);
+  private chatService = inject(ChatService);
+
   isDarkMode = false;
   isLoading = false;
   showPassword = false;
   onLogin(form: NgForm): void {
     if (form.invalid || this.isLoading) return;
     this.isLoading = true;
-    console.log('Sending login request', form.value);
 
     this.authService.login(form.value).subscribe({
       next: (response) => {
-        console.log(response);
-
         this.isLoading = false;
-        this.userService.getCurrentUser().subscribe();
-        this.router.navigate(['/homePage']);
+        this.userService.getCurrentUser().subscribe({
+          next: () => {
+            this.socketService.connect(response.data.accessToken);
+            this.socketService.initializeChatListeners(this.chatService);
+            this.router.navigate(['/homePage']);
+          },
+        });
       },
 
       error: (error) => {
@@ -39,25 +45,22 @@ export class Login {
 
         const message = error.error?.message ?? '';
         if (error.status === 403 && message.includes('verify')) {
-          this.router.navigate(['/resend-verification'],
-            {
-              state: {
-                email: form.value.email
-              }
-            }
-          );
-          return
+          this.router.navigate(['/resend-verification'], {
+            state: {
+              email: form.value.email,
+            },
+          });
+          return;
         }
         error = message || 'Login failed';
       },
-
     });
   }
   loginWithGoogle() {
-    window.location.href = "http://localhost:8000/api/v1/auth/google"
+    window.location.href = 'http://localhost:8000/api/v1/auth/google';
   }
   loginWithGithub() {
-    window.location.href = "http://localhost:8000/api/v1/auth/github"
+    window.location.href = 'http://localhost:8000/api/v1/auth/github';
   }
   constructor(private themeService: ThemeService) {
     this.themeService.darkMode$.subscribe((mode) => {

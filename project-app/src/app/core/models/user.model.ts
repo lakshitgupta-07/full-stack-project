@@ -20,4 +20,6 @@ export interface User {
   hasPassword?: boolean;
   provider?: string | null;
   googleId?: string | null;
+  accessToken: string
 }
+

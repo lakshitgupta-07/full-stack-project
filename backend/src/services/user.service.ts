@@ -138,3 +138,21 @@ export const getCurrentUserService = async (userId: string) => {
 
     return userResponse;
 };
+
+export const searchUserService = async(
+  query: string,
+  currentUserId: string
+) => {
+  const users = await User.find({
+    _id: {
+      $ne: currentUserId
+    },
+    username: {
+      $regex: query,
+      $options: "i"
+    }
+  })
+  .select("_id username avatar")
+  .limit(10)
+  return users
+}

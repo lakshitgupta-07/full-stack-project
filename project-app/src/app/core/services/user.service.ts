@@ -1,16 +1,17 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { tap } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { ApiResponse } from '../models/auth.model';
 import { environment } from '../../../environment/envirenment';
 import { User } from '../models/user.model';
-
+import { ChatUser } from '../models/chat.model';
+import { Observable } from 'rxjs';
 @Injectable({
   providedIn: 'root',
 })
 export class UserService {
   private http = inject(HttpClient);
-  currentUser: User | null = null
+  currentUser = signal<User | null>(null)
   getCurrentUser() {
     return this.http.get<ApiResponse<User>>(`${environment.apiUrl}/user/me`, {
       withCredentials: true,
@@ -18,7 +19,7 @@ export class UserService {
   )
   .pipe(
     tap((response)=> {
-      this.currentUser = response.data
+      this.currentUser.set(response.data)
     })
   )
   }
@@ -43,5 +44,16 @@ export class UserService {
     return this.http.patch<ApiResponse<User>>(`${environment.apiUrl}/user/me`, data, {
       withCredentials: true,
     });
+  }
+
+  searchUser(query: string): Observable<ChatUser[]> {
+    return this.http.get<ApiResponse<ChatUser[]>>(`${environment.apiUrl}/user/search`,
+      {
+        params: {
+          q: query
+        },
+        withCredentials: true
+      }
+    ).pipe(map(res => res.data))
   }
 }

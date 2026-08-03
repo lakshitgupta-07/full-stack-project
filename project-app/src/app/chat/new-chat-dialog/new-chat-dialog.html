@@ -1,0 +1,8 @@
+<div class="dialog">
+    <input [(ngModel)]="search" (input)="searchUsers()", placeholder="Search User">
+
+    <div *ngFor="let user of users" class="user-item" (click)="startConversation(user)">
+        <img [src]="user.avatar.url">
+        {{user.username}}
+    </div>
+</div>

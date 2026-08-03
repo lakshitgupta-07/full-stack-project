@@ -10,7 +10,9 @@ export const changePasswordSchema = z.object({
     oldPassword: z.string().optional(),
     newPassword: z.string().min(8, "Password must be 8 charachters")
 })
-
+export const searchUserSchema = z.object({
+    q: z.string().trim().min(2)
+})
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>
 export type changePasswordInput = z.infer<typeof changePasswordSchema>

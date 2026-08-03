@@ -1,6 +1,6 @@
-import { Message } from "../../models/message.model.js";
-import type { AuthenticatedSocket } from "../../types/authenticated-socket.js";
-import { getIO } from "../socket.js";
+import { Message } from "../../../models/message.model.js";
+import type { AuthenticatedSocket } from "../../../types/authenticated-socket.js";
+import { getIO } from "../../socket.js";
 
 export const markSeen = async(
     socket: AuthenticatedSocket,

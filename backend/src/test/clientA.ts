@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 const socket = io("http://localhost:8000", {
   auth: {
     token:
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhNjJmZWRkNTIwOTBhMmY4MGE0ZGZhNiIsImVtYWlsIjoibGFrc2hpdC5ndXB0YUB0ZXRyLm9yZyIsInVzZXJuYW1lIjoibGFrc2hpdGd1cHRhIiwiaWF0IjoxNzg1NDA3OTUxLCJleHAiOjE3ODU0OTQzNTF9.TXaWVhVpT20zPGH-2j9asggTjOzmFQxe-Unf7V260FY",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhNjJmZWRkNTIwOTBhMmY4MGE0ZGZhNiIsImVtYWlsIjoibGFrc2hpdC5ndXB0YUB0ZXRyLm9yZyIsInVzZXJuYW1lIjoibGFrc2hpdGd1cHRhIiwiaWF0IjoxNzg1NDk1MzQyLCJleHAiOjE3ODU1ODE3NDJ9.-lYd8zPcz0G87_xiLklyqUWOXEEBU5ed0C-MmM-olbw",
   },
 });
 
@@ -90,12 +90,38 @@ socket.on("thread-accepted", (thread) => {
   }, 6000);
 });
 
+socket.on(
+    "user-online", 
+    (user) => {
+        console.log("Online");
+        console.log(user)
+    }
+)
+
+socket.on(
+    "user-offline", 
+    (users) => {
+        console.log("Offline");
+        console.log(users)
+    }
+)
+
+socket.on(
+    "online-users", 
+    (user) => {
+        console.log("Online-Users");
+        console.log(user)
+    }
+)
+
+socket.on("message-delivered", (data) => {
+    console.log("Message delivered");
+    console.log(data)
+})
+
 // socket.on("message-seen", (data) => {
 //     console.log("Message Seen");
 //     console.log(data)
 // })
 
-// socket.on("message-delivered", (data) => {
-//     console.log("Message delivered");
-//     console.log(data)
-// })
+

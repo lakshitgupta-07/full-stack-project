@@ -1,0 +1,54 @@
+/* .thread-card {
+    display: flex;
+    position: relative;
+    background: teal;
+    color: black;
+} */
+
+:host {
+    width: 320px;
+    min-width: 320px;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #2b2b2b;
+    background: #1a1a1a;
+    color: white;
+}
+
+.sidebar-header {
+    padding: 18px;
+    border-bottom: 1px solid #333;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.search-box {
+    padding: 12px;
+}
+
+.search-box input {
+    width: 100px;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    background: #2c2c2c;
+    color: white
+}
+
+.thread-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.thread-item {
+    padding: 14px 10px;
+    border-bottom: 1px solid #2d2d2d;
+    cursor: pointer;
+    transition: background .2s;
+}
+
+.thread-item:hover {
+    background: #2b2b2b;
+}

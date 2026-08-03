@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 const socket = io("http://localhost:8000", {
   auth: {
     token:
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhNjMyZjYwZDBhYjY2NjZiOTIyNzk3NCIsImVtYWlsIjoibGFrc2hpdGd1cHRhMDcwQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoibGFrc2hpdGd1cHRhMSIsImlhdCI6MTc4NTQwNzg5OSwiZXhwIjoxNzg1NDk0Mjk5fQ.js8SYkRhhhRXxnDm_Lxe6XOFBDaiuC5qP_pQvocSclc",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhNjMyZjYwZDBhYjY2NjZiOTIyNzk3NCIsImVtYWlsIjoibGFrc2hpdGd1cHRhMDcwQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoibGFrc2hpdGd1cHRhMSIsImlhdCI6MTc4NTQ5NTM5MiwiZXhwIjoxNzg1NTgxNzkyfQ.creq-fny3zE0tDV_1rrvmBpyGN-UlfZzo49zcg9cwAM",
   },
 });
 
@@ -39,29 +39,63 @@ socket.on("thread-request", (thread) => {
   )
 });
 
-
 socket.on(
   "user-typing",
   (payload) => {
     console.log(payload.username, "is typing")
   }
 )
+
 socket.on(
   "user-stopped-typing",
   () => {
     console.log("User stopped typing")
   }
 )
+
 socket.on("new-message", (message) => {
   console.log("User B recieved");
   console.log(message);
+    socket.emit(
+    "message-delivered",
+    {
+        messageId: message._id
+    },
+    (response: any) => {
+      console.log("ACK");
+      console.log(response)
+    }
+  )
 })
-//   socket.emit(
-//     "message-delivered",
-//     {
-//         messageId: message._id
-//     },
-//   )
+
+socket.on(
+  "user-online",
+  (user) => {
+    console.log("Online");
+    console.log(user)
+  }
+)
+
+socket.on(
+  "user-offline",
+  (user) => {
+    console.log("Offline");
+    console.log(user)
+  }
+)
+
+socket.on(
+  "online-users",
+  (users) => {
+    console.log("Online-Users")
+    console.log(users)
+  }
+)
+
+socket.on("message-delivered", (data) => {
+    console.log("Message delivered");
+    console.log(data)
+})
 //   setTimeout(() => {
 //     socket.emit(
 //       "message-seen",
