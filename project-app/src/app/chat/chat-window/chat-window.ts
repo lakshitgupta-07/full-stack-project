@@ -109,7 +109,6 @@ export class ChatWindow /*implements AfterViewChecked*/ {
     const otherParticipant = this.getOtherParticipants(thread);
     if (!currentUser || !otherParticipant) return;
 
-    //const tempId = 'temp-' + Date.now() + '-' + Math.random().toString(36).substring(2, 11);
     const tempId = crypto.randomUUID()
     const tempMessage: ChatMessage = {
       _id: tempId,
