@@ -4,6 +4,6 @@ export const deleteFromCloudinary = async (publicId: string) => {
   if (!publicId) return;
 
   await cloudinary.uploader.destroy(publicId, {
-    resource_type: "image",
+    resource_type: "auto",
   });
 };

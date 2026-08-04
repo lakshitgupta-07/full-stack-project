@@ -103,10 +103,37 @@ export class ChatWindow /*implements AfterViewChecked*/ {
     const text = this.newMessageText.trim();
     const thread = this.chatService.selectedThread();
     if (!thread) return;
-    if(!text && !this.selectedFile) return
+    if (!text && !this.selectedFile) return;
     const file = this.selectedFile;
+    const currentUser = this.currentUser;
+    const otherParticipant = this.getOtherParticipants(thread);
+    if (!currentUser || !otherParticipant) return;
 
-    if(file) {
+    //const tempId = 'temp-' + Date.now() + '-' + Math.random().toString(36).substring(2, 11);
+    const tempId = crypto.randomUUID()
+    const tempMessage: ChatMessage = {
+      _id: tempId,
+      sender: {
+        _id: currentUser._id,
+        username: currentUser.username,
+        avatar: currentUser.avatar ? { url: currentUser.avatar.url, publicId: currentUser.avatar.publicId } : { url: '', publicId: '' }
+      },
+      receiver: otherParticipant,
+      textMessage: text,
+      image: this.previewUrl ? { url: this.previewUrl, publicId: '' } : null,
+      video: this.previewUrl ? { url: this.previewUrl, publicId:'' } : null,
+      threadId: thread._id,
+      createdAt: new Date().toISOString(),
+      status: 'sending'
+    };
+
+    this.chatService.addTemporaryMessage(tempMessage);
+
+    this.newMessageText = '';
+    this.previewUrl = null;
+    this.selectedFile = null;
+
+    if (file) {
       this.isUploading = true;
       this.uplodadService.uploadImage(file)
       .subscribe({
@@ -119,27 +146,27 @@ export class ChatWindow /*implements AfterViewChecked*/ {
               image: response.data
             },
             (socketResponse: any) => {
-              if(socketResponse.success) {
-                this.newMessageText = ''
-                this.previewUrl = null
-                this.selectedFile = null
-                this.chatService.messages.update(messages => [
-                  ...messages,
-                  socketResponse.message
-                ])
-                //this.shouldScroll = true
+              if (socketResponse.success) {
+                this.chatService.replaceTemporaryMessage(tempId, socketResponse.message);
+              } else {
+                console.error("Failed to send message:", socketResponse.error);
+                this.chatService.markMessageSendFailed(tempId);
               }
             }
           );
         },
+        error: (err) => {
+          console.error("Image upload failed:", err);
+          this.chatService.markMessageSendFailed(tempId);
+          this.isUploading = false;
+        },
         complete: () => {
-          this.isUploading = false
+          this.isUploading = false;
         } 
       });
-      return
+      return;
     }
 
-    if(!text) return
     this.socketService.emit(
       "send-message",
       {
@@ -148,14 +175,10 @@ export class ChatWindow /*implements AfterViewChecked*/ {
       },
       (response: any) => {
         if (response.success) {
-          this.newMessageText = '';
-          this.chatService.messages.update(messages => [
-            ...messages,
-            response.message
-          ])
-          //this.shouldScroll = true
+          this.chatService.replaceTemporaryMessage(tempId, response.message);
         } else {
           console.error("Failed to send message:", response.error);
+          this.chatService.markMessageSendFailed(tempId);
         }
       }
     );

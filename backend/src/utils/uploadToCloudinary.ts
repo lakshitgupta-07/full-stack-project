@@ -13,7 +13,7 @@ export const uploadToCloudinary = (
     const stream = cloudinary.uploader.upload_stream(
       {
         folder,
-        resource_type: "image",
+        resource_type: "auto",
       },
       (error, result) => {
 

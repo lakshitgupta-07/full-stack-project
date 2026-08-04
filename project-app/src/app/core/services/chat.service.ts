@@ -1,5 +1,5 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { Thread, ChatMessage, ChatImage } from '../models/chat.model';
+import { Injectable, signal } from '@angular/core';
+import { Thread, ChatMessage, ChatMedia } from '../models/chat.model';
 
 @Injectable({
   providedIn: 'root'
@@ -16,7 +16,9 @@ export class ChatService {
 
   typingUsers = signal<Record<string, string>>({})
 
-  image = signal<ChatImage>
+  image = signal<ChatMedia>
+
+  video = signal<ChatMedia>
 
   setThread(threads: Thread[]) {
     this.threads.set(threads)

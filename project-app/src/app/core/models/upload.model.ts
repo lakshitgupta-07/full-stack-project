@@ -1,4 +1,4 @@
-export interface chatImage {
+export interface ChatMedia {
     url: string,
     publicId: string
 }

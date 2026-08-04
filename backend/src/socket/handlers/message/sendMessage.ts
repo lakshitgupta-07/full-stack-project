@@ -12,12 +12,17 @@ export const sendMessage = async (
     image?: {
       url: string,
       publicId: string
+    };
+    video?: {
+      url: string,
+      publicId: string
     }
   },
 ) => {
   const hasText = payload.textMessage && payload.textMessage.trim().length > 0;
   const hasImage = payload.image && payload.image.url
-  if (!hasText && !hasImage) {
+  const hasVideo = payload.video && payload.video.url
+  if (!hasText && !hasImage && !hasVideo) {
     throw new Error("Message cannot be empty");
   }
   const thread = await Thread.findOne({
@@ -40,6 +45,10 @@ export const sendMessage = async (
     receiver: receiver,
     textMessage: payload.textMessage ?? "",
     image: payload.image ?? {
+      url: "",
+      publicId: ""
+    },
+    video: payload.video ?? {
       url: "",
       publicId: ""
     }

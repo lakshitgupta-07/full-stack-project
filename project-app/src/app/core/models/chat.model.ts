@@ -20,7 +20,7 @@ export interface Thread {
   updatedAt: string;
 }
 
-export interface ChatImage {
+export interface ChatMedia {
   url: string;
   publicId: string;
 }
@@ -30,7 +30,8 @@ export interface ChatMessage {
   sender: ChatUser;
   receiver: ChatUser;
   textMessage: string;
-  image: ChatImage | null;
+  image: ChatMedia | null;
+  video: ChatMedia | null,
   threadId: string;
   createdAt: string;
   status: | "sending" | "sent" | "delivered" | "read" | "failed"

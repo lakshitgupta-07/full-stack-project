@@ -35,6 +35,11 @@
         @if(msg.textMessage) {
           <p>{{ msg.textMessage }}</p>
         }
+        @if(msg.video?.url; as videoUrl) {
+          <video controls>
+            <source [src]="videoUrl">
+          </video>
+        }
         @if(openedImage) {
           <div class="image-overlay" (click)="closeImage()">
             <img [src]="openedImage">
@@ -45,6 +50,12 @@
           @if(msg.sender._id === currentUser?._id) {
             <span class="status" [ngClass]="msg.status">
               @switch(msg.status) {
+                @case('sending') {
+                  ...
+                }
+                @case('failed') {
+                  ⚠️
+                }
                 @case('sent') {
                   ✓
                 }
@@ -100,7 +111,7 @@
   <input type="text" placeholder="Type a message..." [(ngModel)]="newMessageText" (input)="onTyping()" (keydown.enter)="sendMessage()">
   <label class="attach-btn">
     @
-    <input hidden type="file" accept="image/*" (change)="onFileSelected($event)">
+    <input hidden type="file" accept="image/*, video/*" (change)="onFileSelected($event)">
   </label>
   <button class="send-btn" (click)="sendMessage()">Send</button>
 </div>
