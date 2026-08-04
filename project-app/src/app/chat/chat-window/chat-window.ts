@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, ViewChild, ElementRef, AfterViewInit, effect } from '@angular/core';
+import { Component, inject, ViewChild, ElementRef, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '../../core/services/chat.service';
 import { AuthStateService } from '../../core/services/auth-state.service';
@@ -14,7 +14,7 @@ import { UploadService } from '../../core/services/upload.service';
   styleUrl: './chat-window.css',
 })
 
-export class ChatWindow {
+export class ChatWindow /*implements AfterViewChecked*/ {
   @ViewChild('messagesContainer') messageContainer!: ElementRef<HTMLDivElement>
   public chatService = inject(ChatService)
   public authState = inject(AuthStateService)
@@ -38,16 +38,20 @@ export class ChatWindow {
   }
 
   private scrollToBottom() {
-    queueMicrotask(() => {
-      if(!this.messageContainer) return;
-      this.messageContainer.nativeElement.scrollTop = this.messageContainer.nativeElement.scrollHeight
-    })
+    setTimeout(() => {
+      if (this.messageContainer) {
+        const element = this.messageContainer.nativeElement;
+        element.scrollTop = element.scrollHeight;
+      }
+    }, 0);
   }
+
   constructor() {
     effect(() => {
+      this.chatService.selectedThread();
       this.chatService.messages();
-      this.scrollToBottom()
-    })
+      this.scrollToBottom();
+    });
   }
 
   acceptThread(thread: Thread) {
@@ -123,6 +127,7 @@ export class ChatWindow {
                   ...messages,
                   socketResponse.message
                 ])
+                //this.shouldScroll = true
               }
             }
           );
@@ -148,6 +153,7 @@ export class ChatWindow {
             ...messages,
             response.message
           ])
+          //this.shouldScroll = true
         } else {
           console.error("Failed to send message:", response.error);
         }
