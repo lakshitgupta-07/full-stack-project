@@ -33,5 +33,5 @@ export interface ChatMessage {
   image: ChatImage | null;
   threadId: string;
   createdAt: string;
-  status: "sent" | "delivered" | "read"
+  status: | "sending" | "sent" | "delivered" | "read" | "failed"
 }

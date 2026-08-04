@@ -1,5 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { Thread, ChatMessage } from '../models/chat.model';
+import { Thread, ChatMessage, ChatImage } from '../models/chat.model';
 
 @Injectable({
   providedIn: 'root'
@@ -15,6 +15,8 @@ export class ChatService {
   search = signal('');
 
   typingUsers = signal<Record<string, string>>({})
+
+  image = signal<ChatImage>
 
   setThread(threads: Thread[]) {
     this.threads.set(threads)
@@ -78,4 +80,19 @@ export class ChatService {
       return [...messages, message];
     });
   }
+  addTemporaryMessage(message: ChatMessage) {
+    this.messages.update(messages => [...messages, message])
+  }
+  replaceTemporaryMessage(tempId: string, message: ChatMessage) {
+    this.messages.update(messages => messages.map(m => m._id === tempId ? message : m))
+  }
+  markMessageSendFailed(tempId: string) {
+    this.messages.update(messages => messages.map(m => m._id === tempId ? {
+      ...m,
+      status: "failed"
+    }
+    :
+    m
+  ))
+}
 }

@@ -94,7 +94,6 @@ export class SocketService {
                 if(response.success) {
                     chatService.setMessage(response.message);
                     
-                    // Send read receipts for any unread received messages
                     const currentUserId = this.authState.user?._id;
                     if (currentUserId && Array.isArray(response.message)) {
                         response.message.forEach((msg: ChatMessage) => {
@@ -131,7 +130,6 @@ export class SocketService {
                 if (chatService.selectedThread()?._id === message.threadId) {
                     chatService.addMessage(message);
                     
-                    // If we are the receiver of this message, send delivery & read receipts
                     const currentUserId = this.authState.user?._id;
                     if (currentUserId) {
                         const isReceived = message.receiver?._id === currentUserId || (typeof message.receiver === 'string' && message.receiver === currentUserId);
@@ -141,7 +139,6 @@ export class SocketService {
                         }
                     }
                 } else {
-                    // If message is in another thread and we are the receiver, mark it delivered
                     const currentUserId = this.authState.user?._id;
                     if (currentUserId) {
                         const isReceived = message.receiver?._id === currentUserId || (typeof message.receiver === 'string' && message.receiver === currentUserId);

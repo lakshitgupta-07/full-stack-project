@@ -24,12 +24,22 @@
     }
   </div>
   } @else {
-  <div class="chat-messages">
+  <div class="chat-messages" #messagesContainer>
     @for(msg of chatService.messages(); track msg._id) {
     <div class="message-row"
       [ngClass]="{'sent': msg.sender._id === currentUser?._id, 'received': msg.sender._id !== currentUser?._id}">
       <div class="message-bubble">
-        <p>{{ msg.textMessage }}</p>
+        @if(msg.image?.url; as imageUrl) {
+          <img class="chat-image" [src]="imageUrl" (click)="openImage(imageUrl)">
+        }
+        @if(msg.textMessage) {
+          <p>{{ msg.textMessage }}</p>
+        }
+        @if(openedImage) {
+          <div class="image-overlay" (click)="closeImage()">
+            <img [src]="openedImage">
+          </div>
+        }
         <div class="msg-meta">
           <span class="msg-time">{{ msg.createdAt | date:'shortTime' }}</span>
           @if(msg.sender._id === currentUser?._id) {
@@ -79,8 +89,19 @@
   }
 
   }
-  <input type="text" placeholder="Type a message..." [(ngModel)]="newMessageText" (input)="onTyping() "
-    (keydown.enter)="sendMessage()">
+  @if(previewUrl) {
+    <div class="image-provider">
+      <img [src]="previewUrl">
+      <button (click)="cancelImage()">
+        X
+      </button>
+    </div>
+  }
+  <input type="text" placeholder="Type a message..." [(ngModel)]="newMessageText" (input)="onTyping()" (keydown.enter)="sendMessage()">
+  <label class="attach-btn">
+    @
+    <input hidden type="file" accept="image/*" (change)="onFileSelected($event)">
+  </label>
   <button class="send-btn" (click)="sendMessage()">Send</button>
 </div>
 }
