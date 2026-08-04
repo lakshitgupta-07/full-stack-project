@@ -1,11 +1,18 @@
-import mongoose, { Schema, Document, Types } from "mongoose";
-
+import mongoose, { Schema, Document, Types, ObjectId } from "mongoose";
 export interface IThread extends Document {
-    participants: any[],
+    participants: ObjectId[],
     createdBy: Types.ObjectId,
     status: "pending" | "active" | "rejected",
     lastMessage: Types.ObjectId,
     lastMessageAt: Date,
+    // group: {
+    //     type: "private" | "public",
+    //     groupName: string,
+    //     groupAvatar: {
+    //         url: string,
+    //         publicId: string
+    //     }  
+    // }
 }
 
 const threadSchema = new Schema<IThread>(

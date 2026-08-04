@@ -52,6 +52,6 @@ export const sendMessage = async (
     .populate("sender", "username avatar")
     .populate("receiver", "username avatar")
   getIO().to(receiver.toString()).emit("new-message", populatedMessage);
-  getIO().to(socket.user._id.toString()).emit("new-message", populatedMessage);
+  // getIO().to(socket.user._id.toString()).emit("new-message", populatedMessage);
   return populatedMessage;
 };

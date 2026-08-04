@@ -8,10 +8,8 @@ import { acceptThread } from "./handlers/threads/acceptThread.js";
 import { sendMessage } from "./handlers/message/sendMessage.js";
 import { getMessageThread } from "./handlers/message/getThreadMessage.js";
 import { addUser, removeUser, getOnlineUsers } from "./presence/presence.js";
-// import { markSeen } from "./handlers/markSeen.handler.js";
 import { markSeen } from "./handlers/message/markSeen.js";
 import { messageDelivered } from "./handlers/message/messageDelivered.js";
-import { success } from "zod";
 import { getMyThread } from "./handlers/threads/getMyThreads.js";
 
 let io: Server;
@@ -124,13 +122,15 @@ export const initializeSocket = (server: HttpServer) => {
                     const message = await messageDelivered(authSocket, payload)
                     callback({
                         success: true,
-                        message
+                        message: message
                     })
                 } catch (err: any) {
-                    callback({
-                        success: false,
-                        error: err.message
-                    })
+                    if(callback) {
+                        callback({
+                            success: false,
+                            error: err.message
+                        })
+                    }
                 }
             }
         )
@@ -142,7 +142,7 @@ export const initializeSocket = (server: HttpServer) => {
                     if (callback) {
                         callback({
                             success: true,
-                            message
+                            message: message
                         })
                     }
                 } catch (err: any) {
@@ -162,7 +162,7 @@ export const initializeSocket = (server: HttpServer) => {
                     const message = await getMessageThread(authSocket, payload)
                     callback({
                         success: true,
-                        message
+                        message: message
                     })
                 } catch (err: any) {
                     callback({
