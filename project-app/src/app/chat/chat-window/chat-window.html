@@ -36,9 +36,14 @@
           <p>{{ msg.textMessage }}</p>
         }
         @if(msg.video?.url; as videoUrl) {
-          <video controls>
+          <video class="chat-video" controls>
             <source [src]="videoUrl">
           </video>
+        }
+        @if(msg.audio?.url; as audioUrl) {
+          <audio class="chat-audio" controls>
+            <source [src]="audioUrl">
+          </audio>
         }
         @if(openedImage) {
           <div class="image-overlay" (click)="closeImage()">
@@ -102,7 +107,13 @@
   }
   @if(previewUrl) {
     <div class="image-provider">
-      <img [src]="previewUrl">
+      @if(isVideoSelected) {
+        <video [src]="previewUrl" muted autoplay style="max-height: 100px; max-width: 100px; object-fit: cover;"></video>
+      } @else if (isAudioSelected) {
+        <audio [src]="previewUrl" controls style="max-height: 40px; max-width: 250px;"></audio>
+      } @else {
+        <img [src]="previewUrl">
+      }
       <button (click)="cancelImage()">
         X
       </button>
@@ -111,8 +122,17 @@
   <input type="text" placeholder="Type a message..." [(ngModel)]="newMessageText" (input)="onTyping()" (keydown.enter)="sendMessage()">
   <label class="attach-btn">
     @
-    <input hidden type="file" accept="image/*, video/*" (change)="onFileSelected($event)">
+    <input hidden type="file" accept="image/*, video/*, audio/*" (change)="onFileSelected($event)">
   </label>
+  <button (click)="toggleMic()">
+    🎤
+  </button>
+  @if(isRecording) {
+    <div class="recording">
+      🔴 Recording...
+      {{recordingTime}} sec
+    </div>
+  }
   <button class="send-btn" (click)="sendMessage()">Send</button>
 </div>
 }

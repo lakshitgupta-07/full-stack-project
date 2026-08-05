@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { uploadChatImageService, uploadChatVideoService } from "../services/upload.service.js";
+import { uploadChatAudioService, uploadChatImageService, uploadChatVideoService } from "../services/upload.service.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -11,7 +11,7 @@ export const uploadChatImage = asyncHandler(async (req: Request, res: Response) 
     res.status(200).json(
         new ApiResponse(200, image, "Image Uploaded")
     )
-})
+});
 
 export const uploadChatVideo = asyncHandler(async(req: Request, res: Response) => {
     if(!req.file) {
@@ -21,4 +21,14 @@ export const uploadChatVideo = asyncHandler(async(req: Request, res: Response) =
     res.status(200).json(
         new ApiResponse(200, video, "Video Uploaded")
     )
-})
+});
+
+export const uploadChatAudio = asyncHandler(async(req: Request, res: Response) => {
+    if(!req.file) {
+        throw new Error("Audio not found")
+    }
+    const audio = await uploadChatAudioService(req.file)
+    res.status(200).json(
+        new ApiResponse(200, audio, "Audio Uploaded")
+    )
+});

@@ -13,6 +13,10 @@ export interface IMessage extends Document {
         url: string,
         publicId: string
     };
+    audio: {
+        url: string,
+        publicId: string
+    };
     status: "sent" | "delivered" | "read";
     threadId: Types.ObjectId;
     createdAt: Date;
@@ -55,6 +59,16 @@ const messageSchema = new Schema<IMessage> (
                 type: String,
                 default: "",
             },
+        },
+        audio: {
+            url: {
+                type: String,
+                default: "",
+            },
+            publicId: {
+                type: String,
+                default: ""
+            }
         },
         seen: {
             type: Boolean,

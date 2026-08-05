@@ -27,4 +27,12 @@ export class UploadService {
             formData
         )
     }
+    uploadAudio(file: File): Observable<ApiResponse<ChatMedia>> {
+        const formData = new FormData();
+        formData.append("audio", file)
+        return this.http.post<ApiResponse<ChatMedia>> (
+            `${environment.apiUrl}/user/audio`,
+            formData
+        )
+    }
 }

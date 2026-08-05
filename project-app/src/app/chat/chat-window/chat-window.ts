@@ -13,28 +13,35 @@ import { UploadService } from '../../core/services/upload.service';
   templateUrl: './chat-window.html',
   styleUrl: './chat-window.css',
 })
-
 export class ChatWindow /*implements AfterViewChecked*/ {
-  @ViewChild('messagesContainer') messageContainer!: ElementRef<HTMLDivElement>
-  public chatService = inject(ChatService)
-  public authState = inject(AuthStateService)
-  private socketService = inject(SocketService)
-  private typingTimeout: any
-  private uplodadService = inject(UploadService)
+  @ViewChild('messagesContainer') messageContainer!: ElementRef<HTMLDivElement>;
+  public chatService = inject(ChatService);
+  public authState = inject(AuthStateService);
+  private socketService = inject(SocketService);
+  private typingTimeout: any;
+  private uploadService = inject(UploadService);
+
   newMessageText = '';
+
   selectedFile: File | null = null;
   previewUrl: string | null = null;
-  isUploading = false
+  isUploading = false;
   openedImage: string | null = null;
+
+  private audioStream!: MediaStream;
+  audioRecorder!: MediaRecorder;
+  audioChunks: Blob[] = [];
+  isRecording = false;
+  recordingTime = 0;
+  recordTimer: any;
+  audioToggle: boolean = false;
 
   get currentUser() {
     return this.authState.user;
   }
 
   getOtherParticipants(thread: Thread) {
-    return thread.participants.find(
-      p => p._id !== this.authState.user?._id
-    )
+    return thread.participants.find((p) => p._id !== this.authState.user?._id);
   }
 
   private scrollToBottom() {
@@ -55,48 +62,46 @@ export class ChatWindow /*implements AfterViewChecked*/ {
   }
 
   acceptThread(thread: Thread) {
-    this.socketService.emit(
-      "accept-thread",
-      { threadId: thread._id },
-      (response: any) => {
-        if (response.success) {
-          this.chatService.updateThread(response.thread);
-        } else {
-          console.error("Failed to accept thread:", response.error);
-        }
+    this.socketService.emit('accept-thread', { threadId: thread._id }, (response: any) => {
+      if (response.success) {
+        this.chatService.updateThread(response.thread);
+      } else {
+        console.error('Failed to accept thread:', response.error);
       }
-    )
+    });
   }
   onTyping() {
     const thread = this.chatService.selectedThread();
-    if(!thread) return;
-    this.socketService.emit(
-      "typing",
-      {
-        threadId: thread._id
-      }
-    )
-    clearTimeout(this.typingTimeout)
+    if (!thread) return;
+    this.socketService.emit('typing', {
+      threadId: thread._id,
+    });
+    clearTimeout(this.typingTimeout);
     this.typingTimeout = setTimeout(() => {
-      this.socketService.emit(
-      "stop-typing",
-      {
-        threadId: thread._id
-      }
-      );
-    }, 1000)
+      this.socketService.emit('stop-typing', {
+        threadId: thread._id,
+      });
+    }, 1000);
   }
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    if(!input.files?.length) return;
-    this.selectedFile = input.files[0]
-    this.previewUrl = URL.createObjectURL(this.selectedFile)
+    if (!input.files?.length) return;
+    this.selectedFile = input.files[0];
+    this.previewUrl = URL.createObjectURL(this.selectedFile);
   }
 
   cancelImage() {
     this.selectedFile = null;
     this.previewUrl = null;
+  }
+
+  get isVideoSelected() {
+    return this.selectedFile?.type.startsWith('video/');
+  }
+
+  get isAudioSelected() {
+    return this.selectedFile?.type.startsWith('audio/');
   }
 
   sendMessage() {
@@ -109,21 +114,26 @@ export class ChatWindow /*implements AfterViewChecked*/ {
     const otherParticipant = this.getOtherParticipants(thread);
     if (!currentUser || !otherParticipant) return;
 
-    const tempId = crypto.randomUUID()
+    const isVideo = file && file.type.startsWith('video/');
+    const isAudio = file && file.type.startsWith('audio/');
+    const tempId = crypto.randomUUID();
     const tempMessage: ChatMessage = {
       _id: tempId,
       sender: {
         _id: currentUser._id,
         username: currentUser.username,
-        avatar: currentUser.avatar ? { url: currentUser.avatar.url, publicId: currentUser.avatar.publicId } : { url: '', publicId: '' }
+        avatar: currentUser.avatar
+          ? { url: currentUser.avatar.url, publicId: currentUser.avatar.publicId }
+          : { url: '', publicId: '' },
       },
       receiver: otherParticipant,
       textMessage: text,
-      image: this.previewUrl ? { url: this.previewUrl, publicId: '' } : null,
-      video: this.previewUrl ? { url: this.previewUrl, publicId:'' } : null,
+      image: !isVideo && !isAudio && this.previewUrl ? { url: this.previewUrl, publicId: '' } : null,
+      video: isVideo && this.previewUrl ? { url: this.previewUrl, publicId: '' } : null,
+      audio: isAudio && this.previewUrl ? { url: this.previewUrl, publicId: '' } : null,
       threadId: thread._id,
       createdAt: new Date().toISOString(),
-      status: 'sending'
+      status: 'sending',
     };
 
     this.chatService.addTemporaryMessage(tempMessage);
@@ -134,60 +144,170 @@ export class ChatWindow /*implements AfterViewChecked*/ {
 
     if (file) {
       this.isUploading = true;
-      this.uplodadService.uploadImage(file)
-      .subscribe({
+      let upload$;
+      if (isVideo) {
+        upload$ = this.uploadService.uploadVideo(file);
+      } else if (isAudio) {
+        upload$ = this.uploadService.uploadAudio(file);
+      } else {
+        upload$ = this.uploadService.uploadImage(file);
+      }
+
+      upload$.subscribe({
         next: (response) => {
-          this.socketService.emit(
-            "send-message",
-            {
-              threadId: thread._id,
-              textMessage: text,
-              image: response.data
-            },
-            (socketResponse: any) => {
-              if (socketResponse.success) {
-                this.chatService.replaceTemporaryMessage(tempId, socketResponse.message);
-              } else {
-                console.error("Failed to send message:", socketResponse.error);
-                this.chatService.markMessageSendFailed(tempId);
-              }
+          const payload: any = {
+            threadId: thread._id,
+            textMessage: text,
+          };
+          if (isVideo) {
+            payload.video = response.data;
+          } else if (isAudio) {
+            payload.audio = response.data;
+          } else {
+            payload.image = response.data;
+          }
+          this.socketService.emit('send-message', payload, (socketResponse: any) => {
+            if (socketResponse.success) {
+              this.chatService.replaceTemporaryMessage(tempId, socketResponse.message);
+            } else {
+              console.error('Failed to send message:', socketResponse.error);
+              this.chatService.markMessageSendFailed(tempId);
             }
-          );
+          });
         },
         error: (err) => {
-          console.error("Image upload failed:", err);
+          console.error('Upload failed:', err);
           this.chatService.markMessageSendFailed(tempId);
           this.isUploading = false;
         },
         complete: () => {
           this.isUploading = false;
-        } 
+        },
       });
       return;
     }
 
     this.socketService.emit(
-      "send-message",
+      'send-message',
       {
         threadId: thread._id,
-        textMessage: text
+        textMessage: text,
       },
       (response: any) => {
         if (response.success) {
           this.chatService.replaceTemporaryMessage(tempId, response.message);
         } else {
-          console.error("Failed to send message:", response.error);
+          console.error('Failed to send message:', response.error);
           this.chatService.markMessageSendFailed(tempId);
         }
-      }
+      },
     );
   }
 
+  uploadVoice(file: File) {
+    const thread = this.chatService.selectedThread();
+    if (!thread) return;
+    const currentUser = this.currentUser;
+    const otherParticipant = this.getOtherParticipants(thread);
+    const text = this.newMessageText.trim();
+    if (!currentUser || !otherParticipant) return;
+
+    const tempId = crypto.randomUUID();
+    const tempMessage: ChatMessage = {
+      _id: tempId,
+      sender: {
+        _id: currentUser._id,
+        username: currentUser.username,
+        avatar: currentUser.avatar
+          ? { url: currentUser.avatar.url, publicId: currentUser.avatar.publicId }
+          : { url: '', publicId: '' },
+      },
+      receiver: otherParticipant,
+      textMessage: text,
+      image: null,
+      video: null,
+      audio: { url: URL.createObjectURL(file), publicId: '' },
+      threadId: thread._id,
+      createdAt: new Date().toISOString(),
+      status: 'sending',
+    };
+    this.chatService.addTemporaryMessage(tempMessage);
+
+    this.uploadService.uploadAudio(file).subscribe({
+      next: (response) => {
+        this.socketService.emit(
+          'send-message',
+          {
+            threadId: thread._id,
+            audio: response.data,
+          },
+          (socketResponse: any) => {
+            if (socketResponse.success) {
+              this.chatService.replaceTemporaryMessage(tempId, socketResponse.message);
+            } else {
+              console.error('Failed to send voice message:', socketResponse.error);
+              this.chatService.markMessageSendFailed(tempId);
+            }
+          },
+        );
+      },
+      error: (err) => {
+        console.error('Voice upload failed:', err);
+        this.chatService.markMessageSendFailed(tempId);
+      }
+    });
+  }
+
+  async startRecording() {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+    });
+
+    this.audioRecorder = new MediaRecorder(stream);
+    this.audioStream = stream;
+    this.audioChunks = [];
+    this.audioRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        this.audioChunks.push(event.data);
+      }
+    };
+
+    this.audioRecorder.start();
+    this.isRecording = true;
+    this.recordingTime = 0;
+    this.recordTimer = setInterval(() => {
+      this.recordingTime++;
+    }, 1000);
+  }
+
+  stopRecording() {
+    if (!this.audioRecorder) return;
+    this.audioRecorder.stop();
+    this.audioStream.getTracks().forEach((track) => track.stop());
+    clearInterval(this.recordTimer);
+    this.isRecording = false;
+    this.audioRecorder.onstop = () => {
+      const blob = new Blob(this.audioChunks, { type: 'audio/webm' });
+      const file = new File([blob], `voice-${Date.now()}.webm`, { type: 'audio/webm' });
+      this.uploadVoice(file);
+    };
+  }
+
+  toggleMic() {
+    this.audioToggle = !this.audioToggle;
+
+    if (this.audioToggle) {
+      this.startRecording();
+    } else {
+      this.stopRecording();
+    }
+  }
+
   openImage(url: string) {
-    this.openedImage = url
+    this.openedImage = url;
   }
 
   closeImage() {
-    this.openedImage = null
+    this.openedImage = null;
   }
 }

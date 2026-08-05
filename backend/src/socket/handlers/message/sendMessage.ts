@@ -16,13 +16,18 @@ export const sendMessage = async (
     video?: {
       url: string,
       publicId: string
-    }
+    };
+    audio?: {
+      url: string,
+      publicId: string
+    };
   },
 ) => {
   const hasText = payload.textMessage && payload.textMessage.trim().length > 0;
-  const hasImage = payload.image && payload.image.url
-  const hasVideo = payload.video && payload.video.url
-  if (!hasText && !hasImage && !hasVideo) {
+  const hasImage = payload.image && payload.image.url;
+  const hasVideo = payload.video && payload.video.url;
+  const hasAudio = payload.audio && payload.audio.url;
+  if (!hasText && !hasImage && !hasVideo && !hasAudio) {
     throw new Error("Message cannot be empty");
   }
   const thread = await Thread.findOne({
@@ -51,16 +56,19 @@ export const sendMessage = async (
     video: payload.video ?? {
       url: "",
       publicId: ""
-    }
+    },
+    audio: payload.audio ?? {
+      url: "",
+      publicId: ""
+    },
   });
   thread.lastMessage = message._id
   thread.lastMessageAt = new Date();
   await thread.save()
 
   const populatedMessage = await Message.findById(message._id)
-    .populate("sender", "username avatar")
-    .populate("receiver", "username avatar")
+  .populate("sender", "username avatar")
+  .populate("receiver", "username avatar")
   getIO().to(receiver.toString()).emit("new-message", populatedMessage);
-  // getIO().to(socket.user._id.toString()).emit("new-message", populatedMessage);
   return populatedMessage;
 };

@@ -31,7 +31,8 @@ export interface ChatMessage {
   receiver: ChatUser;
   textMessage: string;
   image: ChatMedia | null;
-  video: ChatMedia | null,
+  video?: ChatMedia | null;
+  audio?: ChatMedia | null
   threadId: string;
   createdAt: string;
   status: | "sending" | "sent" | "delivered" | "read" | "failed"

@@ -20,6 +20,8 @@ export class ChatService {
 
   video = signal<ChatMedia>
 
+  audio = signal<ChatMedia>
+
   setThread(threads: Thread[]) {
     this.threads.set(threads)
   }
