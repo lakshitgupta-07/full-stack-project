@@ -1,4 +1,4 @@
-.row {
+/* .row {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
@@ -79,4 +79,205 @@
   .col-lg-12 {
     flex-basis: 100%;
   }
+} */
+
+/* ---------- Layout ---------- */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.col-lg-12 {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.col-lg-8 {
+  flex: 1 1 calc(65% - 20px);
+  min-width: 0;
+}
+
+.col-lg-4 {
+  flex: 1 1 calc(35% - 20px);
+  min-width: 300px;
+}
+
+@media (max-width: 992px) {
+  .col-lg-8,
+  .col-lg-4,
+  .col-lg-12 {
+    flex-basis: 100%;
+  }
+}
+
+/* ---------- Header ---------- */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dashboard-header h2 {
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.action-buttons .btn {
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.action-buttons .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+
+.action-buttons .btn:active {
+  transform: translateY(0);
+}
+
+/* Plain, unstyled Chat button gets brought in line with the rest */
+.action-buttons button:not([class*="btn"]) {
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  background: #6f42c1;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: transform 0.1s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.action-buttons button:not([class*="btn"]):hover {
+  background: #7e4fd6;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* ---------- Cards ---------- */
+.card {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.card-header {
+  border-bottom: none;
+  padding: 0.9rem 1.25rem;
+}
+
+.card-header h5 {
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+/* ---------- Search row ---------- */
+.form-control,
+.form-select {
+  box-sizing: border-box;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #d8dbe0;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #6f42c1;
+  box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.15);
+}
+
+/* ---------- Table ---------- */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0;
+  font-size: 0.875rem;
+}
+
+.table th,
+.table td {
+  white-space: nowrap;
+  vertical-align: middle;
+  padding: 0.65rem 0.85rem;
+}
+
+.table thead th {
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.table code {
+  font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+  font-size: 0.78rem;
+  background-color: #eef0ff;
+  color: #4c3a9e;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.table .badge {
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: 0.4em 0.7em;
+  border-radius: 6px;
+}
+
+/* ---------- Add/Edit form panel ---------- */
+/* Overrides the inline background:#35064b on .card-body so the form matches
+   the app's accent color instead of a jarring, low-contrast purple/black. */
+.card-body[style] {
+  background: #f4f0fb !important;
+}
+
+.card-body[style] .form-label {
+  color: #3a2a5d;
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+}
+
+.card-body[style] .form-control,
+.card-body[style] .form-select {
+  border: 1px solid #d9cfef;
+  background: #fff;
+}
+
+.card-body[style] button.w-100 {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 0.6rem;
 }

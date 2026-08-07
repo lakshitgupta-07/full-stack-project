@@ -13,7 +13,7 @@ import { UploadService } from '../../core/services/upload.service';
   templateUrl: './chat-window.html',
   styleUrl: './chat-window.css',
 })
-export class ChatWindow /*implements AfterViewChecked*/ {
+export class ChatWindow {
   @ViewChild('messagesContainer') messageContainer!: ElementRef<HTMLDivElement>;
   public chatService = inject(ChatService);
   public authState = inject(AuthStateService);

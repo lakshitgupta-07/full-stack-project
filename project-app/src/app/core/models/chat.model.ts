@@ -16,6 +16,10 @@ export interface Thread {
   status: "pending" | "active";
   lastMessage: string | null;
   lastMessageAt: string | null;
+  isGroup: boolean;
+  groupName?: string,
+  groupAvatar?: ChatAvatar,
+  admins?: ChatUser[]
   createdAt: string;
   updatedAt: string;
 }

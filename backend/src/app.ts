@@ -6,6 +6,8 @@ import userRouter from './routes/user.routes.js'
 import bannerRouter from './routes/banner.routes.js'
 import adminRouter from './routes/admin.routes.js'
 import employeeRouter from './routes/employee.routes.js'
+import paymentRouter from './routes/payment.routes.js'
+import aiRouter from './ai/routes/ai.routes.js'
 import { api_prefix } from './constants/index.js'
 import { errorHandler } from "./middlewares/error.middleware.js";
 import { requestLogger } from './middlewares/requestLogger.middleware.js'
@@ -37,6 +39,8 @@ app.use(`${api_prefix}/user`, userRouter)
 app.use(`${api_prefix}/banner`, bannerRouter)
 app.use(`${api_prefix}/admin`, adminRouter)
 app.use(`${api_prefix}/employee`, employeeRouter)
+app.use(`${api_prefix}/payment`, paymentRouter)
+app.use(`${api_prefix}/ai`, aiRouter)
 
 app.use(errorHandler);
 export default app;

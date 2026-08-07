@@ -1,154 +1,113 @@
-<div class="text-center mb-4">
+<div class="page">
 
-    <div class="avatar-wrapper">
+  <div class="dashboard-header">
+    <div class="header-title">
+      <h2>My Profile</h2>
+      <p class="header-subtitle">Manage your personal details and skills</p>
+    </div>
 
-        <img
-            [src]="avatarPreview || 'assets/default-avatar.png'"
-            class="profile-avatar">
+    <div class="action-buttons">
+      <button class="btn btn-ghost" (click)="returnToHomePage()">
+        <span class="btn-icon">🏠</span> Home
+      </button>
+      <button class="btn btn-ghost" (click)="moveToParentComp()">
+        <span class="btn-icon">↩️</span> Parent Component
+      </button>
+      <button class="btn btn-accent" (click)="buyPremium()">
+        <span class="btn-icon">⭐</span> Buy Premium
+      </button>
+    </div>
+  </div>
+
+  <div class="profile-layout">
+
+    <div class="card avatar-card">
+      <div class="avatar-wrapper">
+        <img [src]="avatarPreview || 'assets/default-avatar.png'" class="profile-avatar">
 
         <label class="camera-icon">
-
-            <i class="bi bi-camera-fill"></i>
-
-            <input
-                hidden
-                type="file"
-                accept="image/*"
-                (change)="onAvatarSelected($event)">
-
+          <i class="bi bi-camera-fill"></i>
+          <input hidden type="file" accept="image/*" (change)="onAvatarSelected($event)">
         </label>
+      </div>
 
+      <h3 class="avatar-name">{{ userForm.get('username')?.value }}</h3>
+      <span class="avatar-hint">Click the camera icon to update your photo</span>
     </div>
 
-</div>
-<div class="page-header">
-    <h1>Welcome, {{userForm.get('username')?.value}}</h1>
-    <button (click)="returnToHomePage()">Return To Home Page</button>
-    <button (click)="moveToParentComp()">Parent Component</button>
-</div>
-<div class="container mt-4">
+    <div class="card form-card">
+      <div class="card-header">
+        <h5>Profile Details</h5>
+        <span class="badge" [ngClass]="isEditMode ? 'badge-editing' : 'badge-view'">
+          <span class="status-dot"></span>{{ isEditMode ? 'Editing' : 'Viewing' }}
+        </span>
+      </div>
 
-    <div class="card shadow">
+      <div class="card-body">
+        <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
 
-        <div class="card-body">
+          <div class="field">
+            <label class="field-label">Username</label>
+            <input type="text" class="form-control" formControlName="username">
+          </div>
 
-            <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
+          <div class="field">
+            <label class="field-label">Phone Number</label>
+            <input type="text" class="form-control" formControlName="phoneNumber">
+          </div>
 
+          <div class="field">
+            <label class="field-label">Address</label>
+            <textarea rows="3" class="form-control" formControlName="address"></textarea>
+          </div>
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold">
-                        Username: 
-                    </label>
+          <div class="field field--last" formArrayName="skills">
+            <label class="field-label">Skills</label>
 
-                    <input
-                        type="text"
-                        class="form-control"
-                        formControlName="username">
+            <div class="skills-list">
+              @for(skill of skills.controls; track $index; let i = $index) {
+                <div class="skill-row">
+                  <input type="text" class="form-control" [formControlName]="i">
+                  @if(isEditMode) {
+                    <button type="button" class="icon-btn icon-btn--delete" (click)="removeSkill(i)" title="Remove">
+                      🗑️
+                    </button>
+                  }
                 </div>
+              } @empty {
+                <div class="skills-empty">No skills added yet</div>
+              }
+            </div>
 
+            @if(isEditMode) {
+              <button type="button" class="btn btn-outline btn-sm add-skill-btn" (click)="addSkill('', false)">
+                <span class="btn-icon">＋</span> Add Skill
+              </button>
+            }
+          </div>
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold">
-                        Phone Number: 
-                    </label>
-
-                    <input
-                        type="text"
-                        class="form-control"
-                        formControlName="phoneNumber">
-                </div>
-
-                
-
-                <div class="mb-3">
-                    <label class="form-label fw-bold">
-                        Address:
-                    </label>
-
-                    <textarea
-                        rows="3"
-                        class="form-control"
-                        formControlName="address">
-                    </textarea>
-                </div>
-
-
-                <div formArrayName="skills">
-
-                    <label class="form-label fw-bold">
-                        Skills: 
-                    </label>
-                    @for(skill of skills.controls; track $index; let i = $index) {
-                    <div class="d-flex mb-2">
-
-                        <input
-                            type="text"
-                            class="form-control me-2"
-                            [formControlName]="i">
-                        @if(isEditMode) {
-                        <button
-                            type="button"
-                            class="btn btn-danger"
-                            (click)="removeSkill(i)">
-
-                            Remove
-
-                        </button>
-                    }
-                
-
-                    </div>
-                }
-
-                </div>
-
-                @if(isEditMode) {
-                <button
-                    type="button"
-                    class="btn btn-success mt-2"
-                    (click)="addSkill('', false)">
-
-                    Add Skill
-
-                </button>
+          <div class="form-actions">
+            @if(!isEditMode) {
+              <button type="button" class="btn btn-primary" (click)="enableEdit()">
+                <span class="btn-icon">✏️</span> Update Profile
+              </button>
             }
 
-                <hr>
+            <button *ngIf="isEditMode" type="submit" class="btn btn-success">
+              Save Profile
+            </button>
 
-                @if(!isEditMode) {
-                <button
-                    type="button"
-                    class="btn btn-warning me-2"
-                    (click)="enableEdit()">
-
-                    Update Profile
-
-                </button>
+            @if(isEditMode) {
+              <button type="button" class="btn btn-outline" (click)="cancelEdit()">
+                Cancel
+              </button>
             }
+          </div>
 
-                <button
-                    *ngIf="isEditMode"
-                    type="submit"
-                    class="btn btn-primary me-2">
-
-                    Save Profile
-
-                </button>
-                @if(isEditMode){
-                <button
-                    type="button"
-                    class="btn btn-secondary"
-                    (click)="cancelEdit()">
-
-                    Cancel
-
-                </button>
-            }
-
-            </form>
-
-        </div>
-
+        </form>
+      </div>
     </div>
+
+  </div>
 
 </div>

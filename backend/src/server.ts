@@ -10,6 +10,7 @@ import { swaggerDocs } from './config/swagger.js'
 import { initializeSubscriber } from './redis/subscriber.redis.js'
 import http from "http"
 import {initializeSocket} from './socket/socket.js'
+// import { seedAiUser } from './ai/seed/seedAIUser.js'
 
 const server = http.createServer(app)
 initializeSocket(server)
@@ -19,6 +20,7 @@ swaggerDocs(app)
 
 const startServer = async() => {
     await connectDB()
+    // await seedAiUser()
 
     server.listen(PORT, () => {
         logger.info(`Server running at: ${PORT}`)

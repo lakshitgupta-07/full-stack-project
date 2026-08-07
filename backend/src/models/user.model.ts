@@ -18,7 +18,8 @@ export interface IUser {
     url: string;
     publicId: string;
   };
-  role: string,
+  role: string;
+  isPremium: boolean;
   passwordResetToken: string | null;
   passwordResetExpires: Date | null;
   isEmailVerified: Boolean;
@@ -27,6 +28,7 @@ export interface IUser {
   provider: string | null;
   googleId: string | null;
   githubId: string | null;
+  isAI: boolean,
 }
 export interface IUserMethods {
   comparePassword(password: string): Promise<boolean>;
@@ -100,6 +102,10 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
       enum: ['user', 'admin'],
       default: 'user'
     },
+    isPremium: {
+      type: Boolean,
+      default: false
+    },
     passwordResetToken: {
       type: String,
     },
@@ -131,6 +137,10 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
       type: String,
       default: null
     },
+    isAI: {
+      type: Boolean,
+      default: false
+    }
   },
   {
     timestamps: true,

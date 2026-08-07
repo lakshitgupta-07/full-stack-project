@@ -1,9 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray } from '@angular/forms';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { Router } from '@angular/router';
 import { User } from '../core/models/user.model';
 import { UserService } from '../core/services/user.service';
+import { PaymentService } from '../core/services/payment.service';
+import { RazorpayLoaderService } from '../core/services/razorpay-loader.service';
+import { environment } from '../../environment/envirenment';
+import { AuthStateService } from '../core/services/auth-state.service';
 
 @Component({
   selector: 'app-profile-page',
@@ -14,6 +18,9 @@ import { UserService } from '../core/services/user.service';
 export class ProfilePage implements OnInit {
   router = inject(Router);
   private userService = inject(UserService);
+  private paymentService = inject(PaymentService);
+  private loader = inject(RazorpayLoaderService);
+  private authState = inject(AuthStateService)
   currentUser!: User;
   avatarPreview = '';
   userForm!: FormGroup;
@@ -110,5 +117,33 @@ export class ProfilePage implements OnInit {
   }
   moveToParentComp() {
     this.router.navigate(['/parentcomponent']);
+  }
+
+  buyPremium() {
+    this.paymentService.createOrder(999).subscribe(async res => {
+      await this.loader.load();
+      const order = res.data
+      const options = {
+        key: environment.razorpayKey,
+        amount: order.amount,
+        currency: order.currency,
+        order_id: order.id,
+        name: "Chat Application",
+        description: "Premium",
+        handler: (response: any) => {
+          console.log(response);
+          console.log(response.razorpay_order_id)
+          console.log(response.razorpay_payment_id)
+          console.log(response.razorpay_signature)
+          this.paymentService.verifyPayment(response).subscribe( {
+            next: (res) => {
+              console.log(res);
+              alert("Premium active");
+            }, error: (err) => console.log(err)
+          });
+        }
+      };
+      new (window as any).Razorpay(options).open();
+    });
   }
 }

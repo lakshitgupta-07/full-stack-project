@@ -18,6 +18,7 @@ export interface IMessage extends Document {
         publicId: string
     };
     status: "sent" | "delivered" | "read";
+    // isAi: boolean;
     threadId: Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
@@ -83,7 +84,11 @@ const messageSchema = new Schema<IMessage> (
             type: Schema.Types.ObjectId,
             ref: "Thread",
             required: true,
-        }
+        },
+        // isAi: {
+        //     type: Boolean,
+        //     default: false
+        // },
     },
     {
         timestamps: true,

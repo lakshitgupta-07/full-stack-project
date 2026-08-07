@@ -31,11 +31,15 @@ export const createThread = async(
             payload.receiverId
         ],
         createdBy: socket.user._id,
-        status: "pending"
+        status: receiver.isAI ? "active" : "pending",
+        isAI: receiver.isAI,
+        assistantType: receiver.isAI ? "travel" : undefined,
     });
     const populatedThread = await Thread.findById(thread._id)
     .populate("participants", "username avatar")
     .populate("createdBy", "username avatar")
-    getIO().to(payload.receiverId).emit("thread-request", populatedThread)
+    if (!receiver.isAI) {
+        getIO().to(payload.receiverId).emit("thread-request", populatedThread)
+    }
     return populatedThread
 }

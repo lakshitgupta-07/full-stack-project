@@ -11,6 +11,7 @@ import { addUser, removeUser, getOnlineUsers } from "./presence/presence.js";
 import { markSeen } from "./handlers/message/markSeen.js";
 import { messageDelivered } from "./handlers/message/messageDelivered.js";
 import { getMyThread } from "./handlers/threads/getMyThreads.js";
+import { createGroup } from "./handlers/group/createGroup.js";
 
 let io: Server;
 
@@ -71,6 +72,23 @@ export const initializeSocket = (server: HttpServer) => {
                         thread: acceptedThread
                     })
                     console.log("Thread accepted", payload)
+                } catch (err: any) {
+                    callback({
+                        success: false,
+                        error: err.message
+                    })
+                }
+            }
+        )
+        authSocket.on(
+            "create-group",
+            async (payload, callback) => {
+                try {
+                    const groupThread = await createGroup(authSocket, payload)
+                    callback({
+                        success: true,
+                        groupThread
+                    })
                 } catch (err: any) {
                     callback({
                         success: false,

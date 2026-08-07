@@ -81,6 +81,21 @@ export class SocketService {
         )
     }
 
+    createGroup(
+        groupName: string,
+        participants: string[],
+        callback?: Function
+    ) {
+        this.emit(
+            "create-group",
+            {
+                groupName,
+                participants
+            },
+            callback as any
+        )
+    }
+
     getThreadMessage(
         threadId: string,
         chatService: ChatService
@@ -124,6 +139,12 @@ export class SocketService {
                 }
             }
         );
+        this.on(
+            "group-created",
+            (thread: Thread) => {
+                chatService.addThread(thread)
+            }
+        )
         this.on(
             "new-message",
             (message: ChatMessage) => {

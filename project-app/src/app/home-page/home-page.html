@@ -1,4 +1,4 @@
-<div class="container-fluid mt-4">
+<!-- <div class="container-fluid mt-4">
   <div class="position-relative"></div>
 
   <div class="dashboard-header">
@@ -223,6 +223,215 @@
 
       </div>
 
+    </div>
+
+  </div>
+
+  <router-outlet></router-outlet>
+</div> -->
+
+<div class="page">
+  <div class="dashboard-header">
+    <div class="header-title">
+      <h2>Employee Management System</h2>
+      <!-- <p class="header-subtitle">Manage employee records, roles, and access</p> -->
+    </div>
+
+    <div class="action-buttons">
+      <button class="btn btn-ghost" routerLink="/profile">
+        <span class="btn-icon">👤</span> Profile
+      </button>
+
+      <button class="btn btn-ghost" routerLink="/change-password">
+        <span class="btn-icon">🔒</span> Change Password
+      </button>
+
+      <button class="btn btn-primary" (click)="loadEmployee()">
+        <span class="btn-icon">📋</span> Employee Records
+      </button>
+
+      <button *ngIf="showTable" class="btn btn-success" (click)="addNewEmployee()">
+        <span class="btn-icon">＋</span> Add Employee
+      </button>
+
+      <button class="btn btn-accent" routerLink="/chat">
+        <span class="btn-icon">💬</span> Chat
+      </button>
+
+      <button class="btn btn-danger" (click)="logOut()">
+        <span class="btn-icon">⏻</span> Logout
+      </button>
+    </div>
+  </div>
+
+  <div class="content-row" *ngIf="showTable">
+
+    <div class="content-col" [class.content-col--wide]="!showForm" [class.content-col--split]="showForm">
+
+      <div class="card">
+        <div class="card-header">
+          <h5>Employee List</h5>
+          <span class="badge badge-count" *ngIf="totalEmployees > 0">
+            {{ totalEmployees }} total
+          </span>
+        </div>
+
+        <div class="card-body">
+          <div class="search-row">
+            <select class="form-select search-type" [(ngModel)]="searchType">
+              <option value="all">All Fields</option>
+              <option value="name">Name / Email</option>
+              <option value="designation">Designation</option>
+              <option value="department">Department</option>
+              <option value="status">Status</option>
+              <option value="employeeId">Employee ID</option>
+            </select>
+
+            <input type="text" class="form-control search-input" placeholder="Search employees..."
+              [(ngModel)]="searchQuery">
+          </div>
+
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Employee ID</th>
+                  <th>Full Name</th>
+                  <th>Email</th>
+                  <th>Department</th>
+                  <th>Designation</th>
+                  <th>Salary</th>
+                  <th>Joining Date</th>
+                  <th>Status</th>
+                  <th class="col-actions">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr appHighlightRow *ngFor="let emp of (employees | searchKey: searchQuery: searchType)">
+                  <td><code>{{ emp.employeeId || emp.id || emp._id }}</code></td>
+                  <td class="cell-name">{{ emp.fullName || emp.fullname || emp.name }}</td>
+                  <td class="cell-muted">{{ emp.email }}</td>
+                  <td>{{ emp.department }}</td>
+                  <td>{{ emp.designation }}</td>
+                  <td class="cell-salary">{{ emp.salary | currency }}</td>
+                  <td class="cell-muted">{{ emp.joiningDate | date:'mediumDate' }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="emp.status === 'active' ? 'badge-active' : 'badge-inactive'">
+                      <span class="status-dot"></span>{{ emp.status || 'active' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="row-actions">
+                      <button class="icon-btn icon-btn--edit" (click)="editEmployee(emp)" title="Edit">
+                        ✏️
+                      </button>
+                      <button class="icon-btn icon-btn--delete"
+                        (click)="deleteEmployee(emp.employeeId || emp._id || emp.id)" title="Delete">
+                        🗑️
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                <tr *ngIf="employees.length === 0">
+                  <td colspan="9" class="empty-state">
+                    <span class="empty-icon">🗂️</span>
+                    <p>No employees found</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="table-footer" *ngIf="totalPages > 0">
+            <span class="footer-text">
+              Page <strong>{{ page }}</strong> of <strong>{{ totalPages }}</strong>
+              <span class="footer-divider">·</span>
+              {{ totalEmployees }} employees
+            </span>
+            <div class="footer-nav">
+              <button class="btn btn-outline btn-sm" [disabled]="page <= 1" (click)="prevPage()">
+                &laquo; Previous
+              </button>
+              <button class="btn btn-outline btn-sm" [disabled]="page >= totalPages" (click)="nextPage()">
+                Next &raquo;
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-col content-col--form" *ngIf="showForm">
+      <div class="card">
+        <div class="card-header card-header--accent">
+          <h5>{{ isEditMode ? 'Edit Employee' : 'Add Employee' }}</h5>
+        </div>
+
+        <div class="card-body form-card-body">
+          <form #empForm="ngForm" (ngSubmit)="saveEmployee()">
+
+            <div class="field">
+              <label class="field-label">Full Name</label>
+              <input type="text" class="form-control" name="fullName" [(ngModel)]="employee.fullName"
+                placeholder="John Doe" required>
+            </div>
+
+            <div class="field">
+              <label class="field-label">Email</label>
+              <input type="email" class="form-control" name="email" [(ngModel)]="employee.email"
+                placeholder="john@example.com" required>
+            </div>
+
+            <div class="field-pair">
+              <div class="field">
+                <label class="field-label">Department</label>
+                <input type="text" class="form-control" name="department" [(ngModel)]="employee.department"
+                  placeholder="Engineering" required>
+              </div>
+
+              <div class="field">
+                <label class="field-label">Designation</label>
+                <input type="text" class="form-control" name="designation" [(ngModel)]="employee.designation"
+                  placeholder="Software Engineer" required>
+              </div>
+            </div>
+
+            <div class="field-pair">
+              <div class="field">
+                <label class="field-label">Salary</label>
+                <input type="number" class="form-control" name="salary" [(ngModel)]="employee.salary" min="0"
+                  placeholder="50000" required>
+              </div>
+
+              <div class="field">
+                <label class="field-label">Joining Date</label>
+                <input type="date" class="form-control" name="joiningDate" [(ngModel)]="employee.joiningDate">
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="field-label">Status</label>
+              <select class="form-select" name="status" [(ngModel)]="employee.status">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-success w-100" [disabled]="!empForm.form.valid">
+                {{ isEditMode ? 'Update Employee' : 'Add Employee' }}
+              </button>
+
+              <button type="button" class="btn btn-outline w-100" (click)="showForm = false">
+                Cancel
+              </button>
+            </div>
+
+          </form>
+        </div>
+      </div>
     </div>
 
   </div>

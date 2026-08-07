@@ -1,0 +1,64 @@
+<!-- @if(visible()) {
+    <div class="overlay">
+        <div class="dialog">
+            <h2>Create Group</h2>
+            <input type="text" placeholder="Group Name" [(ngModel)]="groupName">
+            <input type="text" placeholder="Search Users" [(ngModel)]="search" (input)="searchUsers()">
+            <div class="users">
+                @for(user of users; track user._id) {
+                    <label>
+                        <input type="checkbox" [checked]="selectedUsers().includes(user._id)" (change)="toggleUser(user._id)">
+                        {{user.username}}
+                    </label>
+                }
+            </div>
+            <div class="button">
+                <button (click)="close()">
+                    Cancel
+                </button>
+                <button (click)="createGroup()">
+                    Create Group
+                </button>
+            </div>
+        </div>
+
+    </div>
+} -->
+
+@if(visible()) {
+    <div class="overlay" (click)="close()">
+        <div class="dialog" (click)="$event.stopPropagation()">
+            <div class="dialog-header">
+                <h2>Create Group</h2>
+                <button class="close-btn" (click)="close()">✕</button>
+            </div>
+
+            <input type="text" class="text-input" placeholder="Group name" [(ngModel)]="groupName">
+            <input type="text" class="text-input" placeholder="Search users..." [(ngModel)]="search" (input)="searchUsers()">
+
+            <div class="users">
+                @for(user of users; track user._id) {
+                    <label class="user-row" [class.checked]="selectedUsers().includes(user._id)">
+                        <input type="checkbox" [checked]="selectedUsers().includes(user._id)" (change)="toggleUser(user._id)">
+                        <span class="checkbox-visual"></span>
+                        @if(user.avatar?.url) {
+                            <img class="user-avatar" [src]="user.avatar.url">
+                        } @else {
+                            <span class="user-avatar placeholder"></span>
+                        }
+                        <span class="user-name">{{ user.username }}</span>
+                    </label>
+                } @empty {
+                    <div class="no-results">No users found</div>
+                }
+            </div>
+
+            <div class="buttons">
+                <button class="cancel-btn" (click)="close()">Cancel</button>
+                <button class="create-btn" [disabled]="!groupName || selectedUsers().length < 2" (click)="createGroup()">
+                    Create Group
+                </button>
+            </div>
+        </div>
+    </div>
+}

@@ -1,6 +1,12 @@
 @if(chatService.selectedThread(); as thread) {
 <div class="chat-header">
-  <h3>{{ getOtherParticipants(thread)?.username }}</h3>
+  <h3>
+    @if(thread.isGroup) {
+      {{ thread.groupName }}
+    } @else {
+      {{ getOtherParticipants(thread)?.username }}
+    }
+  </h3>
 </div>
 
 <div class="messages-container" #messagesContainer>
