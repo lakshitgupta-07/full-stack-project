@@ -22,7 +22,7 @@ ${conversation}
 ASSISTANT:`;
 
     const response = await ai.models.generateContent({
-      model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+      model: process.env.GEMINI_MODEL || "gemini-3.1-flash-lite",
       contents: prompt,
     });
 
