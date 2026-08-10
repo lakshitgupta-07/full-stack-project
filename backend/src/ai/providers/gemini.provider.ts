@@ -28,4 +28,26 @@ ASSISTANT:`;
 
     return response.text ?? "";
   }
+  
+  async generateStream(
+    messages: AIMessage[],
+    onChunk: (chunk: string) => void
+  ): Promise<string> {
+    let fullText = ""
+    const ai = getClient()
+    const systemPrompt = messages.find((m) => m.role === "system")?.content ?? "";
+    const conversation = messages.filter((m) => m.role !== "system").map((m) => `${m.role.toUpperCase()}: ${m.content}`).join("\n")
+    const prompt = `${systemPrompt} ${conversation} ASSISTANT:`;
+    const stream = await ai.models.generateContentStream({
+      model: process.env.GEMINI_MODEL!,
+      contents: prompt
+    })
+    for await (const chunk of stream) {
+      const text = chunk.text ?? "";
+      if(!text) continue
+      fullText += text;
+      onChunk(text)
+    }
+    return fullText
+  }
 }

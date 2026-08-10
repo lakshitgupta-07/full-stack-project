@@ -96,15 +96,27 @@ export const sendMessage = async (
       threadId: thread._id,
       username: "Travel AI",
     });
-
-    // A model response can take much longer than a Socket.IO acknowledgement.
-    // Keep the send acknowledgement independent, then deliver the AI message when ready.
     void (async () => {
       try {
         const aiChatService = await import("../../../ai/services/ai-chat.service.js");
-        const aiMessage = await aiChatService.reply(thread._id.toString());
+        let aiMessageId: string | null = null;
+        const aiMessage = await aiChatService.reply(
+          thread._id.toString(),
+          (messageId, chunk) => {
+            aiMessageId = messageId;
+            getIO().to(socket.user._id.toString()).emit("ai-stream", {
+              threadId: thread._id,
+              messageId,
+              chunk
+            });
+          }
+        );
         if (aiMessage) {
-          getIO().to(socket.user._id.toString()).emit("new-message", aiMessage);
+          getIO().to(socket.user._id.toString()).emit("ai-stream-end", {
+            threadId: thread._id,
+            messageId: aiMessageId,
+            message: aiMessage,
+          });
         }
       } catch (error) {
         console.error("Travel AI reply failed", error);

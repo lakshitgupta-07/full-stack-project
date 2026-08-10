@@ -7,6 +7,7 @@ export interface ChatUser {
     _id: string;
     username: string;
     avatar: ChatAvatar;
+    isAI: boolean
 }
 
 export interface Thread {
@@ -38,6 +39,7 @@ export interface ChatMessage {
   video?: ChatMedia | null;
   audio?: ChatMedia | null
   threadId: string;
-  createdAt: string;
+  isAI: boolean;
+  createdAt: Date;
   status: | "sending" | "sent" | "delivered" | "read" | "failed"
 }

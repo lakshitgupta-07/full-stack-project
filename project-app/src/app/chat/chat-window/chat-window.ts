@@ -125,6 +125,7 @@ export class ChatWindow {
         avatar: currentUser.avatar
           ? { url: currentUser.avatar.url, publicId: currentUser.avatar.publicId }
           : { url: '', publicId: '' },
+          isAI: false
       },
       receiver: otherParticipant,
       textMessage: text,
@@ -132,7 +133,8 @@ export class ChatWindow {
       video: isVideo && this.previewUrl ? { url: this.previewUrl, publicId: '' } : null,
       audio: isAudio && this.previewUrl ? { url: this.previewUrl, publicId: '' } : null,
       threadId: thread._id,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(),//.toISOString(),
+      isAI: false,
       status: 'sending',
     };
 
@@ -221,6 +223,7 @@ export class ChatWindow {
         avatar: currentUser.avatar
           ? { url: currentUser.avatar.url, publicId: currentUser.avatar.publicId }
           : { url: '', publicId: '' },
+          isAI: false
       },
       receiver: otherParticipant,
       textMessage: text,
@@ -228,7 +231,8 @@ export class ChatWindow {
       video: null,
       audio: { url: URL.createObjectURL(file), publicId: '' },
       threadId: thread._id,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date(),//.toISOString(),
+      isAI: false,
       status: 'sending',
     };
     this.chatService.addTemporaryMessage(tempMessage);

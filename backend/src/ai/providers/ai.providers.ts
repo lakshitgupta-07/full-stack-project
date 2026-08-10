@@ -1,8 +1,6 @@
+import { AIMessage } from "../types/ai-message.js";
+
 export interface AIProvider {
-    generate (
-        messages: {
-            role: "system" | "user" | "assistant";
-            content: string;
-        }[]
-    ): Promise<string>;
+    generate (messages: AIMessage[]): Promise<string>;
+    generateStream (messages: AIMessage[], onChunk: (chunk: string) => void): Promise<string>
 }

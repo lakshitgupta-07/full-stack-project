@@ -1,5 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { Thread, ChatMessage, ChatMedia } from '../models/chat.model';
+import { AuthStateService } from './auth-state.service';
 
 @Injectable({
   providedIn: 'root'
@@ -21,6 +22,8 @@ export class ChatService {
   video = signal<ChatMedia>
 
   audio = signal<ChatMedia>
+  
+  private authState = inject(AuthStateService)
 
   setThread(threads: Thread[]) {
     this.threads.set(threads)
@@ -96,7 +99,80 @@ export class ChatService {
       status: "failed"
     }
     :
-    m
-  ))
-}
+    m))
+  }
+  appendAiStream(
+    messageId: string,
+    threadId: string,
+    chunk: string
+  ) {
+    this.messages.update(messages => {
+      const existingMessage = messages.find(
+        message => message._id === messageId
+      );
+      if(existingMessage) {
+        return messages.map(message => 
+          message._id === messageId ? {
+            ...message,
+            textMessage: (message.textMessage ?? "") + chunk
+          }: message
+        );
+      }
+      const currentUser = this.authState.user
+      if(!currentUser) return messages;
+
+      const aiMessage: ChatMessage = {
+        _id: messageId,
+        threadId, 
+        sender: {
+          _id: "ai",
+          username: "Travel AI",
+          avatar: {
+            url: "",
+            publicId: ""
+          },
+          isAI: true
+        },
+        receiver: {
+          _id: currentUser._id,
+          username: currentUser.username,
+          avatar: {
+            url: currentUser.avatar?.url ?? "",
+            publicId: currentUser.avatar?.publicId ?? "",
+          },
+          isAI: true
+        },
+        textMessage: chunk,
+        image: {
+          url: "",
+          publicId: ""
+        },
+        video: {
+          url: "",
+          publicId: ""
+        },
+        audio: {
+          url: "",
+          publicId: ""
+        },
+        isAI: true,
+        status: "sent",
+        createdAt: new Date()
+      }
+      return [...messages, aiMessage]
+    })
+  }
+  finishAiStream(message: ChatMessage) {
+    this.messages.update(messages => {
+      const exists = messages.some(
+        existing => existing._id === message._id
+      );
+      if(exists) {
+        return messages.map(existing => 
+          existing._id === message._id ? message : existing
+        )
+      }
+      return [...messages, message]
+    })
+  }
 }

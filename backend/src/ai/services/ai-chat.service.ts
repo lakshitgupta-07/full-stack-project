@@ -46,7 +46,7 @@ function formatAITextToPlainText(rawText: string): string {
   return processedLines.join("\n").trim();
 }
 
-export const reply = async (threadId: string) => {
+export const reply = async (threadId: string, onChunk: (messageId: string, chunk: string) => void) => {
   const thread = await Thread.findById(threadId);
   if (!thread || !thread.isAI) {
     return null;
@@ -65,8 +65,8 @@ export const reply = async (threadId: string) => {
   });
 
   const prompt = buildPrompt(history);
-  const aiText = await provider.generate(prompt);
-  const refinedAiText = formatAITextToPlainText(aiText);
+  //const aiText = await provider.generate(prompt);
+  //const refinedAiText = formatAITextToPlainText(aiText);
 
   const aiUser = await User.findOne({ isAI: true });
   if (!aiUser) {
@@ -84,8 +84,20 @@ export const reply = async (threadId: string) => {
     threadId,
     sender: aiUser._id,
     receiver: userId,
-    textMessage: refinedAiText,
+    textMessage: "",
   });
+
+  const aiText = await provider.generateStream(
+    prompt, 
+    (chunk) => {
+      onChunk(
+        aiMessage._id.toString(), 
+        chunk
+      )
+    }
+  )
+  aiMessage.textMessage = formatAITextToPlainText(aiText)
+  await aiMessage.save()
 
   thread.lastMessage = aiMessage._id;
   thread.lastMessageAt = new Date();

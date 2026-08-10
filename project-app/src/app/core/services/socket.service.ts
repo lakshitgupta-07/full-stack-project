@@ -205,5 +205,35 @@ export class SocketService {
                 )
             }
         );
+        this.on(
+            "ai-stream",
+            (data: {
+                threadId: string;
+                messageId: string;
+                chunk: string
+            }) => {
+                if(chatService.selectedThread()?._id !== data.threadId) return;
+                chatService.appendAiStream(
+                    data.messageId,
+                    data.threadId,
+                    data.chunk
+                )
+            }
+        )
+        this.on(
+            "ai-stream-end",
+            (data: {
+                threadId: string;
+                messageId: string;
+                message: ChatMessage;
+            }) => {
+                if(chatService.selectedThread()?._id !== data.threadId) {
+                    return;
+                }
+                chatService.finishAiStream(
+                    data.message,
+                )
+            }
+        )
     }
 }

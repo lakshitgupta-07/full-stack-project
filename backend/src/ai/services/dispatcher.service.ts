@@ -6,6 +6,6 @@ export class AIDispatcher {
     ) {}
 
     async ask(messages: any[]) {
-        return this.provider.generate(messages);
+        return this.provider.generateStream(messages, (chunk) => {console.log(chunk)});
     }
 }
