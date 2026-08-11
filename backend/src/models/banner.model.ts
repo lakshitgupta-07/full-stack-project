@@ -8,8 +8,8 @@ export interface IBanner {
     backgroundColor: string;
     textColor: string;
     isActive: boolean;
-    startDate: Date;
-    endDate: Date;
+    startDate: string;
+    endDate: string;
     createdBy: any
 }
 
@@ -49,12 +49,12 @@ const bannerSchema = new Schema<IBanner> (
             required: true
         },
         startDate: {
-            type: Date,
-            default: Date.now
+            type: String,
+            default: undefined
         },
         endDate: {
-            type: Date,
-            default: Date.now
+            type: String,
+            default: undefined
         }
     },
     {

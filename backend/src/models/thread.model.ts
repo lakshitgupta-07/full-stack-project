@@ -1,4 +1,6 @@
 import mongoose, { Schema, Document, Types, ObjectId } from "mongoose";
+import { Interface } from "readline";
+import { string } from "zod";
 export interface IThread extends Document {
     participants: any[],
     createdBy: Types.ObjectId,
@@ -14,7 +16,30 @@ export interface IThread extends Document {
     admins: any[],
     isAI: boolean,
     assistantType: string,
+    travelContext: {
+        destination?: string,
+        origin?: string,
+        startDate?: string,
+        endDate?: string,
+        travellers?: number,
+        budget?: number,
+        currency?: string,
+        interests?: string[],
+        travelStyle?: string
+    }
 }
+
+// interface travelContext {
+//     destination?: string;
+//     origin?: string;
+//     startDate?: string;
+//     endDate?: string;
+//     travellers?: number;
+//     budget?: number;
+//     currency?: string;
+//     interests?: string[];
+//     travelStyle?: string;
+// }
 
 const threadSchema = new Schema<IThread>(
     {
@@ -76,7 +101,45 @@ const threadSchema = new Schema<IThread>(
             type: String,
             enum: ["travel"],
             default: undefined
-        }
+        },
+        travelContext: {
+            destination: {
+                type: String,
+                default: undefined
+            },
+            origin: {
+                type: String,
+                default: undefined
+            },
+            startDate: {
+                type: string,
+                default: undefined
+            },
+            endDate: {
+                type: String,
+                default: undefined
+            },
+            travellers: {
+                type: Number,
+                default: undefined
+            },
+            budget: {
+                type: Number,
+                default: undefined
+            },
+            currency: {
+                type: String,
+                default: undefined
+            },
+            interests: {
+                type: [String],
+                default: []
+            },
+            travelStyle: {
+                type: String,
+                default: undefined
+            },
+        },
         // lastMessageType: {},
     },
     {

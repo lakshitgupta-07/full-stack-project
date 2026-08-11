@@ -3,6 +3,8 @@ import { Message } from "../../models/message.model.js";
 import { Thread } from "../../models/thread.model.js";
 import { buildPrompt } from "./prompt.service.js";
 import { GeminiProvider } from "../providers/gemini.provider.js";
+import { updateTravelContext } from "./travel-context.service.js";
+import { parsedIntent } from "./intent.service.js";
 
 const provider = new GeminiProvider();
 function formatAITextToPlainText(rawText: string): string {
@@ -63,8 +65,31 @@ export const reply = async (threadId: string, onChunk: (messageId: string, chunk
       text: message.textMessage,
     };
   });
+  const latestUserMessage = [...messages].reverse().find(message => {
+    const sender = message.sender as any;
+    return !sender.isAI;
+  })
+  if(latestUserMessage?.textMessage) {
+    const intentResult = await parsedIntent(latestUserMessage.textMessage)
+    latestUserMessage.intent = intentResult.intent
+    await updateTravelContext(
+      threadId,
+      latestUserMessage.textMessage
+    )
+    await latestUserMessage.save()
+  }
 
-  const prompt = buildPrompt(history);
+  //const travelContext = thread.travelContext ?? {};
+  const updatedThread = await Thread.findById(threadId);
+  if(!updatedThread) {
+    throw new Error("Thread not found");
+  }
+  const prompt = buildPrompt(
+    history,
+    undefined,
+    updatedThread.travelContext ?? {}
+  )
+  //const prompt = buildPrompt(history);
   //const aiText = await provider.generate(prompt);
   //const refinedAiText = formatAITextToPlainText(aiText);
 

@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
+import type { TravelIntent } from "../ai/types/intent.js";
 
 export interface IMessage extends Document {
     sender: Types.ObjectId;
@@ -18,7 +19,7 @@ export interface IMessage extends Document {
         publicId: string
     };
     status: "sent" | "delivered" | "read";
-    // isAi: boolean;
+    intent?: string;
     threadId: Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
@@ -85,10 +86,25 @@ const messageSchema = new Schema<IMessage> (
             ref: "Thread",
             required: true,
         },
-        // isAi: {
-        //     type: Boolean,
-        //     default: false
-        // },
+        intent: {
+            type: String,
+            enum: [
+                "travel_question",
+                "itinerary_generation",
+                "destination_recommendation",
+                "plan_trip",
+                "create_itinerary",
+                "hotel_recommendation",
+                "destination_comparison",
+                "budget_planning",
+                "packing_list",
+                "food_recommendation",
+                "visa_question",
+                "general_travel",
+                "unknown",
+            ],
+            required: false
+        }
     },
     {
         timestamps: true,

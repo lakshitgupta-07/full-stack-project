@@ -37,7 +37,7 @@ ASSISTANT:`;
       for (const word of words) {
         onChunk(word);
       }
-      await sleep(200);
+      await sleep(35);
     }
     let fullText = "";
     const ai = getClient();
