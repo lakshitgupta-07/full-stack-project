@@ -2,9 +2,12 @@ import type { AIProvider } from "./ai.providers.js";
 import { getClient } from "../../config/createClient.js";
 import type { AIMessage } from "../types/ai-message.js";
 import { retry } from "../../utils/apiRetry.js";
+import type { AIGenerationResult } from "../types/aiUsage.js";
+
 export class GeminiProvider implements AIProvider {
   async generate(messages: AIMessage[]): Promise<string> {
     const ai = getClient();
+
     const systemPrompt =
       messages.find((m) => m.role === "system")?.content ?? "";
 
@@ -22,7 +25,9 @@ ASSISTANT:`;
     const response = await retry(
       () =>
         ai.models.generateContent({
-          model: process.env.GEMINI_MODEL || "gemini-3.1-flash-lite",
+          model:
+            process.env.GEMINI_MODEL ||
+            "gemini-3.1-flash-lite",
           contents: prompt,
         }),
       {
@@ -35,10 +40,10 @@ ASSISTANT:`;
   }
 
   async generateStream(
-    messages: AIMessage[],
-    onChunk: (chunk: string) => void,
-  ): Promise<string> {
-    const sleep = (ms: number) =>
+  messages: AIMessage[],
+  onChunk: (chunk: string) => void,
+): Promise<AIGenerationResult> {
+  const sleep = (ms: number) =>
       new Promise((resolve) => setTimeout(resolve, ms));
     async function emitSlowly(text: string, onChunk: (chunk: string) => void) {
       const words = text.split(/(\s+)/);
@@ -47,32 +52,70 @@ ASSISTANT:`;
       }
       await sleep(35);
     }
-    let fullText = "";
-    const ai = getClient();
-    const systemPrompt =
-      messages.find((m) => m.role === "system")?.content ?? "";
-    const conversation = messages
-      .filter((m) => m.role !== "system")
-      .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
-      .join("\n");
-    const prompt = `${systemPrompt} ${conversation} ASSISTANT:`;
-    const stream = await retry(
-      () =>
-        ai.models.generateContentStream({
-          model: process.env.GEMINI_MODEL!,
-          contents: prompt,
-        }),
-      {
-        retries: 2,
-        delay: 1000,
-      },
-    );
-    for await (const chunk of stream) {
-      const text = chunk.text ?? "";
-      if (!text) continue;
+  const ai = getClient();
+
+  const systemPrompt =
+    messages.find((m) => m.role === "system")?.content ?? "";
+
+  const conversation = messages
+    .filter((m) => m.role !== "system")
+    .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
+    .join("\n");
+
+  const prompt = `${systemPrompt}
+
+${conversation}
+
+ASSISTANT:`;
+
+  const stream = await retry(
+    () =>
+      ai.models.generateContentStream({
+        model:
+          process.env.GEMINI_MODEL ||
+          "gemini-3.1-flash-lite",
+        contents: prompt,
+      }),
+    {
+      retries: 2,
+      delay: 1000,
+    },
+  );
+
+  let fullText = "";
+
+  let inputToken = 0;
+  let outputToken = 0;
+  let totalToken = 0;
+
+  for await (const chunk of stream) {
+    const text = chunk.text ?? "";
+
+    if (text) {
       fullText += text;
       await emitSlowly(text, onChunk);
     }
-    return fullText;
+
+    if (chunk.usageMetadata) {
+      inputToken =
+        chunk.usageMetadata.promptTokenCount ?? inputToken;
+
+      outputToken =
+        chunk.usageMetadata.candidatesTokenCount ?? outputToken;
+
+      totalToken =
+        chunk.usageMetadata.totalTokenCount ?? totalToken;
+    }
   }
+
+  return {
+    text: fullText,
+
+    usage: {
+      inputToken,
+      outputToken,
+      totalToken,
+    },
+  };
+}
 }

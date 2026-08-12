@@ -133,7 +133,6 @@ const threadSchema = new Schema<IThread>(
         },
         conversationSummary: {
             type: String,
-            // default: ""
         },
         summaryMessageCount: {
             type: Number,

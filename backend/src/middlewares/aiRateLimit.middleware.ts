@@ -1,7 +1,7 @@
 import {redis} from "../config/redis.js";
 
 const WINDOW_SECONDS = 60;
-const MAX_REQUESTS = 2;
+const MAX_REQUESTS = 10;
 
 export const aiRateLimitter = async(
     userId: string

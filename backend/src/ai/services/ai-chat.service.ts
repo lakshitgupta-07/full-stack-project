@@ -6,6 +6,7 @@ import { GeminiProvider } from "../providers/gemini.provider.js";
 import { updateTravelContext } from "./travel-context.service.js";
 import { parsedIntent } from "./intent.service.js";
 import { summarizeConversation } from "./conversation-summary.service.js";
+import { saveAIUsage } from "./ai-usage.service.js";
 
 const provider = new GeminiProvider();
 function formatAITextToPlainText(rawText: string): string {
@@ -130,7 +131,7 @@ export const reply = async (threadId: string, onChunk: (messageId: string, chunk
     textMessage: "",
   });
 
-  const aiText = await provider.generateStream(
+  const aiResult = await provider.generateStream(
     prompt,
     (chunk) => {
       onChunk(
@@ -138,10 +139,28 @@ export const reply = async (threadId: string, onChunk: (messageId: string, chunk
         chunk
       )
     }
-  )
-  const formattedText = formatAITextToPlainText(aiText)
-  aiMessage.textMessage = formattedText
-  await aiMessage.save()
+  );
+
+  aiMessage.textMessage = formatAITextToPlainText(aiResult.text);
+  await aiMessage.save();
+
+  // Save the AI usage
+  // console.log(`[Token Usage Test] Preparing to save AI usage for thread: ${threadId}, message: ${aiMessage._id}`);
+  // console.log(`[Token Usage Test] Token details - Input: ${aiResult.usage.inputToken}, Output: ${aiResult.usage.outputToken}, Total: ${aiResult.usage.totalToken}`);
+  try {
+    const savedUsage = await saveAIUsage({
+      threadId,
+      userId: userId.toString(),
+      messageId: aiMessage._id.toString(),
+      model: process.env.GEMINI_MODEL || "gemini-3.1-flash-lite",
+      inputToken: aiResult.usage.inputToken,
+      outputToken: aiResult.usage.outputToken,
+      totalToken: aiResult.usage.totalToken,
+    });
+    // console.log(`[Token Usage Test] Successfully saved usage record in DB. ID: ${savedUsage._id}`);
+  } catch (err) {
+    console.error("[Token Usage Test] Failed to save AI usage to DB:", err);
+  }
 
   thread.lastMessage = aiMessage._id;
   thread.lastMessageAt = new Date();

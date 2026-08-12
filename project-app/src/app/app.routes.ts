@@ -3,7 +3,6 @@ import { Login } from './login/login';
 import { SignUp } from './sign-up/sign-up';
 import { authGuard } from './core/guards/auth-guard';
 import { LandingPage } from './landing-page/landing-page';
-// import { GetApi } from './service/get-api';
 import { ProfilePage } from './profile-page/profile-page';
 import { VerifyEmailComponent } from './verify-email/verify-email';
 import { ChangePasswordComponent } from './change-password/change-password';
