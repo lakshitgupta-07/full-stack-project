@@ -29,7 +29,7 @@ export const restartConversation = async (
         travelStyle: undefined,
     }
     thread.conversationStartedAt = new Date()
-    await Message.findByIdAndDelete(threadId)
+    await Message.deleteMany({ threadId })
     await thread.save()
     return thread
 }

@@ -11,6 +11,7 @@ export type TravelIntent =
  | "update_trip_context"
  | "clear_trip_context"
  | "general_travel"
+ | "prompt_injection"
  | "unknown"
 
 export interface ParsedIntent {

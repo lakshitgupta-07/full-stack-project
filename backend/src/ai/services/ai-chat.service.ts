@@ -13,40 +13,61 @@ function formatAITextToPlainText(rawText: string): string {
 
   let cleaned = rawText;
 
+  // 1. Strip markdown syntax, keeping only the underlying text
   cleaned = cleaned
-    .replace(/\*{1,2}(.*?)\*{1,2}/g, "$1") // Bold (**text**) & Italics (*text*)
-    .replace(/_{1,2}(.*?)_{1,2}/g, "$1")   // Underlines/Italics (_text_)
-    .replace(/`{1,3}(.*?)(`{1,3}|$)/gs, "$1") // Inline/Block Code backticks
-    .replace(/^#{1,6}\s*/gm, "")           // Header symbols (# Header -> Header)
-    .replace(/^\s*>\s*/gm, "");            // Blockquotes (> text -> text)
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")   // Images: ![alt](url) -> alt
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")    // Links: [text](url) -> text
+    .replace(/~~(.*?)~~/g, "$1")                // Strikethrough: ~~text~~
+    .replace(/\*\*\*(.*?)\*\*\*/g, "$1")        // Bold+italic: ***text***
+    .replace(/\*\*(.*?)\*\*/g, "$1")            // Bold: **text**
+    .replace(/\*(.*?)\*/g, "$1")                // Italics: *text*
+    .replace(/__(.*?)__/g, "$1")                // Bold underline: __text__
+    .replace(/_(.*?)_/g, "$1")                  // Italics underline: _text_
+    .replace(/```([\s\S]*?)```/g, "$1")         // Fenced code blocks
+    .replace(/`([^`]*)`/g, "$1")                // Inline code
+    .replace(/^#{1,6}\s+/gm, "")                // Headers: # Header -> Header
+    .replace(/^\s*>\s?/gm, "")                  // Blockquotes
+    .replace(/^\s*[-*_]{3,}\s*$/gm, "");        // Horizontal rules: ---, ***, ___
 
-  // 2. Insert line breaks before list items or numbered headers embedded in inline text
-  // Pattern matches: " 1. ", " 1) ", " Step 1:", " Day 1:", " - ", " * "
-  const listBoundaryRegex = /(?<=\S)\s+(?=(?:\d+[\.\)]|[A-Za-z]+\s+\d+:|[\-\*•])\s+)/g;
+  // 2. Insert line breaks before list items / step markers embedded inline
+  //    Matches: " 1. ", " 1) ", " Step 1:", " Day 1:", " - ", " * ", " • "
+  const listBoundaryRegex =
+    /(?<=\S)\s+(?=(?:\d+[.)]|[A-Za-z]+\s+\d+:|[-*•])\s+)/g;
   cleaned = cleaned.replace(listBoundaryRegex, "\n\n");
 
-  // 3. Normalize bullet points to a single consistent style
-  cleaned = cleaned.replace(/^\s*[\*\-\•]\s+/gm, "• ");
+  // 3. Normalize all bullet markers to a single style
+  cleaned = cleaned.replace(/^\s*[*\-•]\s+/gm, "• ");
 
-  // 4. Split text into lines, trim each, and rebuild proper paragraph gaps
-  const lines = cleaned.split("\n").map((line) => line.trim());
-  
-  const processedLines: string[] = [];
+  // 4. Collapse excess blank lines and trim each line
+  cleaned = collapseBlankLines(cleaned);
+
+  return cleaned.trim();
+}
+
+/**
+ * Trims each line and collapses runs of blank lines down to a single
+ * blank line, so paragraphs are separated consistently.
+ */
+function collapseBlankLines(text: string): string {
+  const lines = text.split("\n").map((line) => line.trim());
+  const result: string[] = [];
   let prevWasEmpty = false;
 
   for (const line of lines) {
     if (line === "") {
-      if (!prevWasEmpty && processedLines.length > 0) {
-        processedLines.push(""); // Add single empty line between sections
-        prevWasEmpty = true;
+      if (!prevWasEmpty && result.length > 0) {
+        result.push("");
       }
+      prevWasEmpty = true;
     } else {
-      processedLines.push(line);
+      result.push(line);
       prevWasEmpty = false;
     }
   }
 
-  return processedLines.join("\n").trim();
+  if (result[0] === "") result.shift();
+
+  return result.join("\n");
 }
 
 export const reply = async (threadId: string, onChunk: (messageId: string, chunk: string) => void) => {
@@ -70,7 +91,7 @@ export const reply = async (threadId: string, onChunk: (messageId: string, chunk
     const sender = message.sender as any;
     return !sender.isAI;
   })
-  if(latestUserMessage?.textMessage) {
+  if (latestUserMessage?.textMessage) {
     const intentResult = await parsedIntent(latestUserMessage.textMessage)
     latestUserMessage.intent = intentResult.intent
     await updateTravelContext(
@@ -80,9 +101,8 @@ export const reply = async (threadId: string, onChunk: (messageId: string, chunk
     await latestUserMessage.save()
   }
 
-  //const travelContext = thread.travelContext ?? {};
   const updatedThread = await Thread.findById(threadId);
-  if(!updatedThread) {
+  if (!updatedThread) {
     throw new Error("Thread not found");
   }
   const prompt = buildPrompt(
@@ -90,9 +110,6 @@ export const reply = async (threadId: string, onChunk: (messageId: string, chunk
     undefined,
     updatedThread.travelContext ?? {}
   )
-  //const prompt = buildPrompt(history);
-  //const aiText = await provider.generate(prompt);
-  //const refinedAiText = formatAITextToPlainText(aiText);
 
   const aiUser = await User.findOne({ isAI: true });
   if (!aiUser) {
@@ -114,10 +131,10 @@ export const reply = async (threadId: string, onChunk: (messageId: string, chunk
   });
 
   const aiText = await provider.generateStream(
-    prompt, 
+    prompt,
     (chunk) => {
       onChunk(
-        aiMessage._id.toString(), 
+        aiMessage._id.toString(),
         chunk
       )
     }

@@ -102,6 +102,7 @@ const messageSchema = new Schema<IMessage> (
                 "general_travel",
                 "update_trip_context",
                 "attraction_recommendation",
+                "prompt_injection",
                 "unknown",
             ],
             required: false

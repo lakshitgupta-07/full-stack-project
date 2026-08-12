@@ -153,18 +153,14 @@
 <div class="chat-header">
   <h3>
     @if(thread.isGroup) {
-      {{ thread.groupName }}
+    {{ thread.groupName }}
     } @else {
-      {{ getOtherParticipants(thread)?.username }}
+    {{ getOtherParticipants(thread)?.username }}
     }
   </h3>
 
-  <button
-    *ngIf="chatService.selectedThread()?.isAI"
-    type="button"
-    class="restart-chat-btn"
-    (click)="restartConversation()"
-  >
+  <button *ngIf="chatService.selectedThread()?.isAI" type="button" class="restart-chat-btn"
+    (click)="restartConversation()">
     ↺ Restart conversation
   </button>
 </div>
@@ -196,48 +192,48 @@
       [ngClass]="{'sent': msg.sender._id === currentUser?._id, 'received': msg.sender._id !== currentUser?._id}">
       <div class="message-bubble">
         @if(msg.image?.url; as imageUrl) {
-          <img class="chat-image" [src]="imageUrl" (click)="openImage(imageUrl)">
+        <img class="chat-image" [src]="imageUrl" (click)="openImage(imageUrl)">
         }
         @if(msg.textMessage) {
-          <p>{{ msg.textMessage }}</p>
+        <p>{{ msg.textMessage }}</p>
         }
         @if(msg.video?.url; as videoUrl) {
-          <video class="chat-video" controls>
-            <source [src]="videoUrl">
-          </video>
+        <video class="chat-video" controls>
+          <source [src]="videoUrl">
+        </video>
         }
         @if(msg.audio?.url; as audioUrl) {
-          <audio class="chat-audio" controls>
-            <source [src]="audioUrl">
-          </audio>
+        <audio class="chat-audio" controls>
+          <source [src]="audioUrl">
+        </audio>
         }
         @if(openedImage) {
-          <div class="image-overlay" (click)="closeImage()">
-            <img [src]="openedImage">
-          </div>
+        <div class="image-overlay" (click)="closeImage()">
+          <img [src]="openedImage">
+        </div>
         }
         <div class="msg-meta">
           <span class="msg-time">{{ msg.createdAt | date:'shortTime' }}</span>
           @if(msg.sender._id === currentUser?._id) {
-            <span class="status" [ngClass]="msg.status">
-              @switch(msg.status) {
-                @case('sending') {
-                  ...
-                }
-                @case('failed') {
-                  ⚠️
-                }
-                @case('sent') {
-                  ✓
-                }
-                @case('delivered') {
-                  ✓✓
-                }
-                @case('read') {
-                  ✓✓
-                }
-              }
-            </span>
+          <span class="status" [ngClass]="msg.status">
+            @switch(msg.status) {
+            @case('sending') {
+            ...
+            }
+            @case('failed') {
+            ⚠️
+            }
+            @case('sent') {
+            ✓
+            }
+            @case('delivered') {
+            ✓✓
+            }
+            @case('read') {
+            ✓✓
+            }
+            }
+          </span>
           }
         </div>
       </div>
@@ -272,20 +268,21 @@
 
   }
   @if(previewUrl) {
-    <div class="image-provider">
-      @if(isVideoSelected) {
-        <video [src]="previewUrl" muted autoplay style="max-height: 100px; max-width: 100px; object-fit: cover;"></video>
-      } @else if (isAudioSelected) {
-        <audio [src]="previewUrl" controls style="max-height: 40px; max-width: 250px;"></audio>
-      } @else {
-        <img [src]="previewUrl">
-      }
-      <button (click)="cancelImage()">
-        X
-      </button>
-    </div>
+  <div class="image-provider">
+    @if(isVideoSelected) {
+    <video [src]="previewUrl" muted autoplay style="max-height: 100px; max-width: 100px; object-fit: cover;"></video>
+    } @else if (isAudioSelected) {
+    <audio [src]="previewUrl" controls style="max-height: 40px; max-width: 250px;"></audio>
+    } @else {
+    <img [src]="previewUrl">
+    }
+    <button (click)="cancelImage()">
+      X
+    </button>
+  </div>
   }
-  <input type="text" placeholder="Type a message..." [(ngModel)]="newMessageText" (input)="onTyping()" (keydown.enter)="sendMessage()">
+  <input type="text" placeholder="Type a message..." [(ngModel)]="newMessageText" (input)="onTyping()"
+    (keydown.enter)="sendMessage()">
   <label class="attach-btn">
     @
     <input hidden type="file" accept="image/*, video/*, audio/*" (change)="onFileSelected($event)">
@@ -294,10 +291,10 @@
     🎤
   </button>
   @if(isRecording) {
-    <div class="recording">
-      🔴 Recording...
-      {{recordingTime}} sec
-    </div>
+  <div class="recording">
+    🔴 Recording...
+    {{recordingTime}} sec
+  </div>
   }
   <button class="send-btn" (click)="sendMessage()">Send</button>
 </div>

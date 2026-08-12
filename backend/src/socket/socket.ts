@@ -120,7 +120,7 @@ export const initializeSocket = (server: HttpServer) => {
             "send-message",
             async (payload, callback) => {
                 try {
-                    const textMessage = await sendMessage(authSocket, payload);
+                    const textMessage = await sendMessage(authSocket, payload, callback);
                     callback({
                         success: true,
                         message: textMessage

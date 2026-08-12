@@ -3,7 +3,8 @@ import { getIO } from "../../socket.js";
 import type { AuthenticatedSocket } from "../../../types/authenticated-socket.js";
 import { Thread } from "../../../models/thread.model.js";
 import { User } from "../../../models/user.model.js";
-// import aiChatService from "../../../ai/services/ai-chat.service.js";
+import { detectPromptInjection, getPromptInjectionResponse } from "../../../ai/services/prompt-injection.service.js";
+import { aiRateLimitter } from "../../../middlewares/aiRateLimit.middleware.js";
 
 export const sendMessage = async (
   socket: AuthenticatedSocket,
@@ -24,6 +25,7 @@ export const sendMessage = async (
       publicId: string;
     };
   },
+  callback: (response: any) => void
 ) => {
   const hasText = payload.textMessage && payload.textMessage.trim().length > 0;
   const hasImage = payload.image && payload.image.url;
@@ -92,6 +94,66 @@ export const sendMessage = async (
     getIO().to(receiver.toString()).emit("new-message", populatedMessage);
   }
   if (isAIThread) {
+    const rateLimit = await aiRateLimitter(socket.user._id.toString())
+    if(!rateLimit.allowed) {
+      const limitMessageText = `Travel AI chat limit exceeded, please wait for ${rateLimit.retryAfter} secs.`
+      
+      const aiUser = await User.findOne({ isAI: true });
+      if (aiUser) {
+        const errorMessage = await Message.create({
+          threadId: thread._id,
+          sender: aiUser._id,
+          receiver: socket.user._id,
+          textMessage: limitMessageText,
+          status: "sent"
+        });
+        
+        const populatedErrorMessage = await Message.findById(errorMessage._id)
+          .populate("sender", "username avatar isAI")
+          .populate("receiver", "username avatar isAI");
+          
+        getIO().to(socket.user._id.toString()).emit("new-message", populatedErrorMessage);
+      }
+      
+      callback({
+        success: false,
+        error: limitMessageText
+      })
+      return
+    }
+    const injectedPrompt = detectPromptInjection(payload.textMessage ?? "");
+    if(injectedPrompt.detected) {
+      const aiUser = await User.findOne({
+        isAI: true
+      });
+      if(!aiUser) {
+        callback({
+          success: false,
+          error: "Travel AI currently available"
+        })
+        return;
+      }
+      const safeResponse = getPromptInjectionResponse()
+      const aiMessage = await Message.create({
+        threadId: thread._id,
+        sender: aiUser._id,
+        receiver: socket.user._id,
+        textMessage: safeResponse,
+        intent: "prompt_injection"
+      })
+      thread.lastMessage = aiMessage._id;
+      thread.lastMessageAt = new Date();
+
+      await thread.save();
+
+      const populatedAIMessage = await Message.findById(aiMessage._id).populate("sender", "username avatar isAI").populate("receiver", "username avatar isAI");
+      callback({
+        success: true,
+        message: populatedMessage
+      })
+      getIO().to(socket.user._id.toString()).emit("new-message", populatedAIMessage)
+      return ;
+    }
     getIO().to(socket.user._id.toString()).emit("user-typing", {
       threadId: thread._id,
       username: "Travel AI",
@@ -120,10 +182,23 @@ export const sendMessage = async (
         }
       } catch (error) {
         console.error("Travel AI reply failed", error);
-        getIO().to(socket.user._id.toString()).emit("ai-chat-error", {
-          threadId: thread._id,
-          message: "Travel AI could not generate a reply. Please try again.",
-        });
+        
+        const aiUser = await User.findOne({ isAI: true });
+        if (aiUser) {
+          const errorMessage = await Message.create({
+            threadId: thread._id,
+            sender: aiUser._id,
+            receiver: socket.user._id,
+            textMessage: "Travel AI could not generate a reply. Please try again.",
+            status: "sent"
+          });
+          
+          const populatedErrorMessage = await Message.findById(errorMessage._id)
+            .populate("sender", "username avatar isAI")
+            .populate("receiver", "username avatar isAI");
+            
+          getIO().to(socket.user._id.toString()).emit("new-message", populatedErrorMessage);
+        }
       } finally {
         getIO().to(socket.user._id.toString()).emit("user-stop-typing", {
           threadId: thread._id,

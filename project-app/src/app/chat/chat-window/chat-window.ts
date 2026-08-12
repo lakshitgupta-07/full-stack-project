@@ -125,7 +125,7 @@ export class ChatWindow {
         avatar: currentUser.avatar
           ? { url: currentUser.avatar.url, publicId: currentUser.avatar.publicId }
           : { url: '', publicId: '' },
-          isAI: false
+        isAI: false
       },
       receiver: otherParticipant,
       textMessage: text,
@@ -223,7 +223,7 @@ export class ChatWindow {
         avatar: currentUser.avatar
           ? { url: currentUser.avatar.url, publicId: currentUser.avatar.publicId }
           : { url: '', publicId: '' },
-          isAI: false
+        isAI: false
       },
       receiver: otherParticipant,
       textMessage: text,
@@ -299,17 +299,17 @@ export class ChatWindow {
 
   restartConversation(): void {
     const thread = this.chatService.selectedThread();
-    if(!thread || !thread.isAI) {
-      return ;
+    if (!thread || !thread.isAI) {
+      return;
     }
 
     const confirmed = window.confirm("Start a fresh conversation? Your current chat history will remain, but Travel AI will have fresh context")
 
-    if(!confirmed) return;
+    if (!confirmed) return;
     this.socketService.restartConversation(
       thread._id,
       (response: any) => {
-        if(!response?.success) {
+        if (!response?.success) {
           console.error("Failed to restart conversation", response?.error);
           return
         }
