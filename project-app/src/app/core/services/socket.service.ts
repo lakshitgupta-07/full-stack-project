@@ -122,6 +122,16 @@ export class SocketService {
             }
         )
     }
+    restartConversation(
+        threadId: string,
+        callback?: Function
+    ): void {
+        this.socket?.emit(
+            "restart-ai-conversation",
+            {threadId},
+            callback as any
+        )
+    }
 
     initializeChatListeners(chatService: ChatService) {
         this.on(

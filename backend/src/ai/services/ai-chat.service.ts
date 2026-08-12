@@ -5,6 +5,7 @@ import { buildPrompt } from "./prompt.service.js";
 import { GeminiProvider } from "../providers/gemini.provider.js";
 import { updateTravelContext } from "./travel-context.service.js";
 import { parsedIntent } from "./intent.service.js";
+import { summarizeConversation } from "./conversation-summary.service.js";
 
 const provider = new GeminiProvider();
 function formatAITextToPlainText(rawText: string): string {
@@ -121,7 +122,8 @@ export const reply = async (threadId: string, onChunk: (messageId: string, chunk
       )
     }
   )
-  aiMessage.textMessage = formatAITextToPlainText(aiText)
+  const formattedText = formatAITextToPlainText(aiText)
+  aiMessage.textMessage = formattedText
   await aiMessage.save()
 
   thread.lastMessage = aiMessage._id;

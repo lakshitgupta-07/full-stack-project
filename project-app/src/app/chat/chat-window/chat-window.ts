@@ -297,6 +297,27 @@ export class ChatWindow {
     };
   }
 
+  restartConversation(): void {
+    const thread = this.chatService.selectedThread();
+    if(!thread || !thread.isAI) {
+      return ;
+    }
+
+    const confirmed = window.confirm("Start a fresh conversation? Your current chat history will remain, but Travel AI will have fresh context")
+
+    if(!confirmed) return;
+    this.socketService.restartConversation(
+      thread._id,
+      (response: any) => {
+        if(!response?.success) {
+          console.error("Failed to restart conversation", response?.error);
+          return
+        }
+        console.log("AI conversation restarted")
+      }
+    )
+  }
+
   toggleMic() {
     this.audioToggle = !this.audioToggle;
 

@@ -1,5 +1,4 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
-import type { TravelIntent } from "../ai/types/intent.js";
 
 export interface IMessage extends Document {
     sender: Types.ObjectId;
@@ -101,6 +100,8 @@ const messageSchema = new Schema<IMessage> (
                 "food_recommendation",
                 "visa_question",
                 "general_travel",
+                "update_trip_context",
+                "attraction_recommendation",
                 "unknown",
             ],
             required: false

@@ -11,6 +11,7 @@ export interface ChatUser {
 }
 
 export interface Thread {
+  isAI: any;
   _id: string;
   participants: ChatUser[];
   createdBy: ChatUser;

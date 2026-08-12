@@ -26,20 +26,11 @@ export interface IThread extends Document {
         currency?: string,
         interests?: string[],
         travelStyle?: string
-    }
+    },
+    conversationSummary?: string | undefined,
+    summaryMessageCount?: number | undefined,
+    conversationStartedAt?: Date
 }
-
-// interface travelContext {
-//     destination?: string;
-//     origin?: string;
-//     startDate?: string;
-//     endDate?: string;
-//     travellers?: number;
-//     budget?: number;
-//     currency?: string;
-//     interests?: string[];
-//     travelStyle?: string;
-// }
 
 const threadSchema = new Schema<IThread>(
     {
@@ -140,6 +131,16 @@ const threadSchema = new Schema<IThread>(
                 default: undefined
             },
         },
+        conversationSummary: {
+            type: String,
+            // default: ""
+        },
+        summaryMessageCount: {
+            type: Number,
+        },
+        conversationStartedAt: {
+            type: Date
+        }
         // lastMessageType: {},
     },
     {

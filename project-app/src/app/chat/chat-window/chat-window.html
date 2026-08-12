@@ -1,3 +1,154 @@
+<!-- @if(chatService.selectedThread(); as thread) {
+<div class="chat-header">
+  <h3>
+    @if(thread.isGroup) {
+      {{ thread.groupName }}
+    } @else {
+      {{ getOtherParticipants(thread)?.username }}
+    }
+  </h3>
+</div>
+
+<div class="messages-container" #messagesContainer>
+  @if(thread.status === 'pending') {
+  <div class="pending-overlay">
+    @if(thread.createdBy._id === currentUser?._id) {
+    <div class="pending-card">
+      <span class="status-icon">🕒</span>
+      <h4>Request Pending</h4>
+      <p>Waiting for {{ getOtherParticipants(thread)?.username }} to accept your chat request.</p>
+    </div>
+    } @else {
+    <div class="pending-card accept-card">
+      <span class="status-icon">✉️</span>
+      <h4>New Chat Request</h4>
+      <p>{{ getOtherParticipants(thread)?.username }} wants to start a conversation with you.</p>
+      <button class="accept-btn" (click)="acceptThread(thread)">
+        Accept Request
+      </button>
+    </div>
+    }
+  </div>
+  } @else {
+  <div class="chat-messages">
+    @for(msg of chatService.messages(); track msg._id) {
+    <div class="message-row"
+      [ngClass]="{'sent': msg.sender._id === currentUser?._id, 'received': msg.sender._id !== currentUser?._id}">
+      <div class="message-bubble">
+        @if(msg.image?.url; as imageUrl) {
+          <img class="chat-image" [src]="imageUrl" (click)="openImage(imageUrl)">
+        }
+        @if(msg.textMessage) {
+          <p>{{ msg.textMessage }}</p>
+        }
+        @if(msg.video?.url; as videoUrl) {
+          <video class="chat-video" controls>
+            <source [src]="videoUrl">
+          </video>
+        }
+        @if(msg.audio?.url; as audioUrl) {
+          <audio class="chat-audio" controls>
+            <source [src]="audioUrl">
+          </audio>
+        }
+        @if(openedImage) {
+          <div class="image-overlay" (click)="closeImage()">
+            <img [src]="openedImage">
+          </div>
+        }
+        <div class="msg-meta">
+          <span class="msg-time">{{ msg.createdAt | date:'shortTime' }}</span>
+          @if(msg.sender._id === currentUser?._id) {
+            <span class="status" [ngClass]="msg.status">
+              @switch(msg.status) {
+                @case('sending') {
+                  ...
+                }
+                @case('failed') {
+                  ⚠️
+                }
+                @case('sent') {
+                  ✓
+                }
+                @case('delivered') {
+                  ✓✓
+                }
+                @case('read') {
+                  ✓✓
+                }
+              }
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+    } @empty {
+    <div class="no-messages">
+      <span class="chat-icon">💬</span>
+      <p>No messages yet. Say hi!</p>
+    </div>
+    }
+  </div>
+  }
+</div>
+
+@if(thread.status === 'active') {
+<div class="message-input-bar">
+  @if(chatService.selectedThread()){
+
+  @if(chatService.typingUsers()[chatService.selectedThread()!._id]){
+
+  <div class="typing">
+
+    {{
+    chatService.typingUsers()[chatService.selectedThread()!._id]
+    }}
+
+    is typing...
+
+  </div>
+
+  }
+
+  }
+  @if(previewUrl) {
+    <div class="image-provider">
+      @if(isVideoSelected) {
+        <video [src]="previewUrl" muted autoplay style="max-height: 100px; max-width: 100px; object-fit: cover;"></video>
+      } @else if (isAudioSelected) {
+        <audio [src]="previewUrl" controls style="max-height: 40px; max-width: 250px;"></audio>
+      } @else {
+        <img [src]="previewUrl">
+      }
+      <button (click)="cancelImage()">
+        X
+      </button>
+    </div>
+  }
+  <input type="text" placeholder="Type a message..." [(ngModel)]="newMessageText" (input)="onTyping()" (keydown.enter)="sendMessage()">
+  <label class="attach-btn">
+    @
+    <input hidden type="file" accept="image/*, video/*, audio/*" (change)="onFileSelected($event)">
+  </label>
+  <button (click)="toggleMic()">
+    🎤
+  </button>
+  @if(isRecording) {
+    <div class="recording">
+      🔴 Recording...
+      {{recordingTime}} sec
+    </div>
+  }
+  <button class="send-btn" (click)="sendMessage()">Send</button>
+</div>
+}
+} @else {
+<div class="no-conversation-selected">
+  <span class="select-icon">💬</span>
+  <h2>Select a conversation to start chatting</h2>
+</div>
+} -->
+
 @if(chatService.selectedThread(); as thread) {
 <div class="chat-header">
   <h3>
@@ -7,6 +158,15 @@
       {{ getOtherParticipants(thread)?.username }}
     }
   </h3>
+
+  <button
+    *ngIf="chatService.selectedThread()?.isAI"
+    type="button"
+    class="restart-chat-btn"
+    (click)="restartConversation()"
+  >
+    ↺ Restart conversation
+  </button>
 </div>
 
 <div class="messages-container" #messagesContainer>

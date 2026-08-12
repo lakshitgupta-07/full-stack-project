@@ -61,9 +61,10 @@ export const updateTravelContext = async (
     const text = response.text?.trim();
 
     if(!text) return null;
+    const cleanedText = text.replace(/^```json\s*/i, "").replace(/^```\*s/i, "").replace(/\s*```$/i, "").trim()
 
     try {
-        const extracted = JSON.parse(text) as Partial<TravelContext>;
+        const extracted = JSON.parse(cleanedText) as Partial<TravelContext>;
         const existing = thread.travelContext ?? {};
 
         const updated: TravelContext = {

@@ -8,7 +8,8 @@ export const buildPrompt = (
         text: string
     }[],
     latestMessage?: string,
-    travelContext?: TravelContext
+    travelContext?: TravelContext,
+    conversationSummary?: string | null
 ): AIMessage[] => {
     const conversation = history.map(m => `${m.senderIsAI ? "Assistant" : "User"}: ${m.text}`).join("\n");
     const contextPrompt = travelContext ? `
@@ -27,10 +28,15 @@ export const buildPrompt = (
     }
     Travel Style: ${travelContext.travelStyle ?? "Not Specified"}
     ` : "";
+    const summaryPrompt = conversationSummary ? `
+    CONVERSATION SUMMARY
+    ${conversationSummary}
+    ` : "";
 
 
     const userPrompt = latestMessage?.trim()
       ? `${contextPrompt}
+      ${summaryPrompt}
       CONVERSATION HISTORY
       ${conversation}
       User: ${latestMessage.trim()}`

@@ -12,7 +12,7 @@ import { markSeen } from "./handlers/message/markSeen.js";
 import { messageDelivered } from "./handlers/message/messageDelivered.js";
 import { getMyThread } from "./handlers/threads/getMyThreads.js";
 import { createGroup } from "./handlers/group/createGroup.js";
-
+import { success } from "zod";
 let io: Server;
 
 export const initializeSocket = (server: HttpServer) => {
@@ -235,6 +235,35 @@ export const initializeSocket = (server: HttpServer) => {
                         userId: authSocket.user._id
                     }
                 )
+            }
+        )
+        authSocket.on(
+            "restart-ai-conversation",
+            async (
+                payload: {threadId: string},
+                callback: (response: any) => void,
+            ) => {
+                try {
+                    if(!payload?.threadId) {
+                        callback({
+                            success: false,
+                            error: "Thread Id is required",
+                        });
+                        return
+                    }
+                    const {restartConversation} = await import ("../ai/services/restart-conversation.service.js")
+                    const thread = restartConversation(payload.threadId, authSocket.user._id.toString())
+                    callback({
+                        success: true,
+                        thread
+                    });
+                } catch (err: any) {
+                    console.error("Restart AI conversation failed", err)
+                    callback({
+                        success: false,
+                        error: err.message
+                    })
+                }
             }
         )
         socket.on("disconnect", () => {
