@@ -266,6 +266,37 @@ export const initializeSocket = (server: HttpServer) => {
                 }
             }
         )
+        authSocket.on(
+            "clear-conversation", 
+            async(
+                payload: { threadId: string },
+                callback: (response: any) => void,
+            ) => {
+                try {
+                    if(!payload?.threadId) {
+                        callback({
+                            success: false,
+                            error: "Thread Id is required"
+                        })
+                        return
+                    }
+                    const {restartHumanConversation} = await import ("../ai/services/restart-conversation.service.js")
+                    const thread = await restartHumanConversation(payload.threadId)
+                    authSocket.to(payload.threadId).emit("conversation-cleared", {
+                        threadId: payload.threadId
+                    })
+                    callback({
+                        success: true,
+                        thread
+                    })
+                } catch (err: any) {
+                    callback({
+                        success: false,
+                        error: err.message
+                    })
+                }
+            }
+        )
         socket.on("disconnect", () => {
             removeUser(
                 authSocket.user._id.toString(),

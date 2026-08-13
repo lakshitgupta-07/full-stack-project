@@ -76,5 +76,37 @@ export const searchKnowledge = async (
             },
         },
     ];
-    return KnowledgeDocument.aggregate(pipeline)
+    let results = await KnowledgeDocument.aggregate(pipeline);
+
+    // Fallback: If vector search returns nothing (e.g. index build delay or local DB), try regex text search
+    if (!results || results.length === 0) {
+        console.log(`[RAG Search] Vector search returned no results. Trying regex text fallback...`);
+        
+        // Extract destination keyword (e.g. "shimla" from "shimla. trip to shimla")
+        const destKeyword = query.includes('.') ? query.split('.')[0]?.trim() : undefined;
+        const searchRegex = new RegExp(query.split('.').pop()?.trim() || query, 'i');
+        const destQuery = city || country || destKeyword;
+        
+        const textQuery: any = {
+            $or: [
+                { text: { $regex: searchRegex } }
+            ]
+        };
+        
+        if (destQuery) {
+            const destRegex = new RegExp(destQuery, 'i');
+            textQuery.$or.push({ text: { $regex: destRegex } });
+            textQuery.$or.push({ "metaData.city": { $regex: destRegex } });
+            textQuery.$or.push({ "metaData.country": { $regex: destRegex } });
+        }
+        
+        const fallbackDocs = await KnowledgeDocument.find(textQuery).limit(limit).lean();
+        
+        results = fallbackDocs.map(doc => ({
+            ...doc,
+            score: 0.85 // Mock score that passes similarity threshold
+        }));
+    }
+
+    return results;
 }

@@ -330,6 +330,33 @@ export class ChatWindow {
     )
   }
 
+  clearChat(): void {
+    const thread = this.chatService.selectedThread();
+    if(!thread || thread.isAI) return;
+
+    const confirmed = window.confirm("Clear chat will delete all the messages and media received which cannot be recovered.")
+    if(!confirmed) return;
+    this.socketService.clearChat(
+      thread._id,
+      (response: any) => {
+        if(!response?.success) {
+          console.error("Failed to restart conversation", response?.error);
+          return
+        }
+        this.chatService.clearCurrentConversation();
+        this.newMessageText = ""
+        this.selectedFile = null
+        this.previewUrl = null
+        this.openedImage = null
+        this.isUploading = false
+
+        clearTimeout(this.typingTimeout)
+        this.isRecording = false
+        this.audioToggle = false
+      }
+    )
+  }
+
   toggleMic() {
     this.audioToggle = !this.audioToggle;
 

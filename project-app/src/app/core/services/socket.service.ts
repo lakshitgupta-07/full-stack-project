@@ -132,6 +132,16 @@ export class SocketService {
             callback as any
         )
     }
+    clearChat(
+        threadId: string,
+        callback?: Function
+    ): void {
+        this.socket?.emit(
+            "clear-conversation",
+            {threadId},
+            callback as any
+        )
+    }
 
     initializeChatListeners(chatService: ChatService) {
         this.on(
@@ -244,6 +254,14 @@ export class SocketService {
                     data.message,
                 )
             }
-        )
+        );
+        this.on(
+            "conversation-cleared",
+            (data: { threadId: string }) => {
+                if (chatService.selectedThread()?._id === data.threadId) {
+                    chatService.messages.set([]);
+                }
+            }
+        );
     }
 }

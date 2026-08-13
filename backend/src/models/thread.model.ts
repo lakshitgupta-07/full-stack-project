@@ -5,8 +5,8 @@ export interface IThread extends Document {
     participants: any[],
     createdBy: Types.ObjectId,
     status: "pending" | "active" | "rejected",
-    lastMessage: Types.ObjectId,
-    lastMessageAt: Date,
+    lastMessage: Types.ObjectId | null,
+    lastMessageAt: Date | null,
     isGroup: boolean,
     groupName: string,
     groupAvatar: {

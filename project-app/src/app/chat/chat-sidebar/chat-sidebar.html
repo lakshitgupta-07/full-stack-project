@@ -1,8 +1,13 @@
 <div class="sidebar-header">
-    <h1>CHATS</h1>
+    <div class="chat-title">
+        <h1>CHATS</h1>
+        <h1>{{ currentUser()?.username }}</h1>
+    </div>
+
     <button class="new-chat-btn" (click)="showDialog = true">
         New Chat
     </button>
+
     <button class="new-group-btn" (click)="openCreateGroup()">
         New Group
     </button>

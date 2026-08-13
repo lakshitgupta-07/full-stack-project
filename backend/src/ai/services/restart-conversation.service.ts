@@ -33,3 +33,20 @@ export const restartConversation = async (
     await thread.save()
     return thread
 }
+
+export const restartHumanConversation = async(
+    threadId: string,
+) => {
+    const thread = await Thread.findOne({
+        _id: threadId,
+        status: "active"
+    })
+    if(!thread) {
+        throw new Error("thread not found")
+    }
+    await Message.deleteMany({threadId})
+    thread.lastMessage = null
+    thread.lastMessageAt = null
+    await thread.save()
+    return thread
+}

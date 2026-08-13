@@ -12,6 +12,9 @@
     (click)="restartConversation()">
     ↺ Restart conversation
   </button>
+  <button *ngIf="!chatService.selectedThread()?.isAI" type="button" class="restart-chat-btn" (click)="clearChat()">
+    ↺ Clear Chat
+  </button>
 </div>
 
 <div class="messages-container" #messagesContainer>
