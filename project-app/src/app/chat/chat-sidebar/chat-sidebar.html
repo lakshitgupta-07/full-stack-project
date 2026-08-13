@@ -19,14 +19,23 @@
 
 <div class="thread-list">
     @for(thread of filteredThreads; track thread._id) {
-    <div class="thread-item" (click)="selectThread(thread)">
-        <h4>
+    <div class="thread-item" [class.active]="chatService.selectedThread()?._id === thread._id" (click)="selectThread(thread)">
+        <div class="thread-avatar">
             @if(thread.isGroup) {
-                {{ thread.groupName }}
+                <img [src]="thread.groupAvatar?.url || 'project-app/public/assets/default-avatar.png'" alt="Group" />
             } @else {
-                {{ getOtherParticipants(thread)?.username }}
+                <img [src]="getOtherParticipants(thread)?.avatar?.url || '/assets/default-avatar.png'" alt="Avatar" />
             }
-        </h4>
+        </div>
+        <div class="thread-info">
+            <h4>
+                @if(thread.isGroup) {
+                    {{ thread.groupName }}
+                } @else {
+                    {{ getOtherParticipants(thread)?.username }}
+                }
+            </h4>
+        </div>
     </div>
     } @empty {
     <div class="thread-item">

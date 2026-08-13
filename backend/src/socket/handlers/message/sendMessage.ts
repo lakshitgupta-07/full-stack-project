@@ -50,7 +50,6 @@ export const sendMessage = async (
   const receiverUser = await User.findById(receiver).select("isAI");
   const isAIThread = thread.isAI || Boolean(receiverUser?.isAI);
 
-  // Repair threads made before AI fields were added to the standard thread flow.
   if (isAIThread && !thread.isAI) {
     thread.isAI = true;
     thread.assistantType = "travel";

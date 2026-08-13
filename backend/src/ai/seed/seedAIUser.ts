@@ -2,8 +2,12 @@ import { User } from "../../models/user.model.js";
 import crypto from "crypto"
 
 export const seedAiUser = async() => {
-    const existing = await User.findOne({ isAI: true })
+    let existing = await User.findOne({ isAI: true })
     if(existing) {
+        if (existing.avatar?.url === "/avatars/travel-ai.png") {
+            existing.avatar.url = "/assets/travel-ai.png";
+            await existing.save();
+        }
         return existing
     }
 
@@ -13,7 +17,7 @@ export const seedAiUser = async() => {
         password: crypto.randomUUID(),
         isAI: true,
         avatar: {
-            url: "/avatars/travel-ai.png",
+            url: "/assets/travel-ai.png",
             publicId: ""
         }
     });
