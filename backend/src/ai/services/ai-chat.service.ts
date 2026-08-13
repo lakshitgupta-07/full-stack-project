@@ -130,6 +130,7 @@ export const reply = async (
     history,
     undefined,
     updatedThread.travelContext ?? {},
+    updatedThread.conversationSummary,
     ragContext,
   );
 
