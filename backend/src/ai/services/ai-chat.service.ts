@@ -14,33 +14,33 @@ function formatAITextToPlainText(rawText: string): string {
   if (!rawText) return "";
 
   let cleaned = rawText;
+  cleaned = cleaned.replace(/\r\n/g, "\n");
 
-  // 1. Strip markdown syntax, keeping only the underlying text
+  
+  cleaned = cleaned.replace(/^\s*#{1,6}\s+(.*)$/gm, "\n\n$1\n\n");
+
+ 
+  cleaned = cleaned.replace(/^[ \t]*(?:[-*+•]|\d+[.)])\s+/gm, "\n• ");
+
+  const inlineListBoundaryRegex =
+    /(?<=[.!?:;])\s+(?=(?:\d+[.)]|[A-Za-z]+\s+\d+:|[-*+•])\s+)/g;
+  cleaned = cleaned.replace(inlineListBoundaryRegex, "\n\n");
+
   cleaned = cleaned
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1") // Images: ![alt](url) -> alt
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // Links: [text](url) -> text
-    .replace(/~~(.*?)~~/g, "$1") // Strikethrough: ~~text~~
-    .replace(/\*\*\*(.*?)\*\*\*/g, "$1") // Bold+italic: ***text***
-    .replace(/\*\*(.*?)\*\*/g, "$1") // Bold: **text**
-    .replace(/\*(.*?)\*/g, "$1") // Italics: *text*
-    .replace(/__(.*?)__/g, "$1") // Bold underline: __text__
-    .replace(/_(.*?)_/g, "$1") // Italics underline: _text_
-    .replace(/```([\s\S]*?)```/g, "$1") // Fenced code blocks
-    .replace(/`([^`]*)`/g, "$1") // Inline code
-    .replace(/^#{1,6}\s+/gm, "") // Headers: # Header -> Header
-    .replace(/^\s*>\s?/gm, "") // Blockquotes
-    .replace(/^\s*[-*_]{3,}\s*$/gm, ""); // Horizontal rules: ---, ***, ___
-
-  // 2. Insert line breaks before list items / step markers embedded inline
-  //    Matches: " 1. ", " 1) ", " Step 1:", " Day 1:", " - ", " * ", " • "
-  const listBoundaryRegex =
-    /(?<=\S)\s+(?=(?:\d+[.)]|[A-Za-z]+\s+\d+:|[-*•])\s+)/g;
-  cleaned = cleaned.replace(listBoundaryRegex, "\n\n");
-
-  // 3. Normalize all bullet markers to a single style
-  cleaned = cleaned.replace(/^\s*[*\-•]\s+/gm, "• ");
-
-  // 4. Collapse excess blank lines and trim each line
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1") 
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") 
+    .replace(/^\[([^\]]+)\]:\s*\S+.*$/gm, "") 
+    .replace(/~~(.*?)~~/g, "$1") 
+    .replace(/\*\*\*(.*?)\*\*\*/g, "$1") 
+    .replace(/\*\*(.*?)\*\*/g, "$1") 
+    .replace(/(?<!\*)\*([^*\n]+?)\*(?!\*)/g, "$1") 
+    .replace(/__(.*?)__/g, "$1") 
+    .replace(/(?<!_)_([^_\n]+?)_(?!_)/g, "$1")
+    .replace(/```([\s\S]*?)```/g, "$1") 
+    .replace(/`([^`]*)`/g, "$1") 
+    .replace(/^\s*>\s?/gm, "") 
+    .replace(/^\s*\|.*\|\s*$/gm, "") 
+    .replace(/^\s*[-*_]{3,}\s*$/gm, "");
   cleaned = collapseBlankLines(cleaned);
 
   return cleaned.trim();
@@ -64,9 +64,11 @@ function collapseBlankLines(text: string): string {
   }
 
   if (result[0] === "") result.shift();
+  if (result[result.length - 1] === "") result.pop();
 
   return result.join("\n");
 }
+
 
 export const reply = async (
   threadId: string,
@@ -156,8 +158,9 @@ export const reply = async (
   const aiResult = await provider.generateStream(prompt, (chunk) => {
     onChunk(aiMessage._id.toString(), chunk);
   });
+  const formattedResult = formatAITextToPlainText(aiResult.text)
 
-  aiMessage.textMessage = formatAITextToPlainText(aiResult.text);
+  aiMessage.textMessage = formattedResult
   await aiMessage.save();
 
   // Save the AI usage
