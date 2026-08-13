@@ -304,7 +304,7 @@ export class ChatWindow {
       return;
     }
 
-    const confirmed = window.confirm("Start a fresh conversation? Your current chat history will remain, but Travel AI will have fresh context")
+    const confirmed = window.confirm("Start a fresh conversation? Your chat histroy will be deleted and Travel AI start with fresh context")
 
     if (!confirmed) return;
     this.socketService.restartConversation(
@@ -314,6 +314,17 @@ export class ChatWindow {
           console.error("Failed to restart conversation", response?.error);
           return
         }
+        this.chatService.clearCurrentConversation();
+        this.newMessageText = ''
+        this.selectedFile = null
+        this.previewUrl = null
+        this.openedImage = null
+        this.isUploading = false
+
+        clearTimeout(this.typingTimeout)
+        this.isRecording = false
+        this.audioToggle = false
+
         console.log("AI conversation restarted")
       }
     )

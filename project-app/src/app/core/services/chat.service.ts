@@ -175,4 +175,7 @@ export class ChatService {
       return [...messages, message]
     })
   }
+  clearCurrentConversation(): void {
+    this.messages.set([])
+  }
 }
