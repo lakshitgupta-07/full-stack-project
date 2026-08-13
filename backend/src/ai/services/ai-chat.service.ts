@@ -7,6 +7,7 @@ import { updateTravelContext } from "./travel-context.service.js";
 import { parsedIntent } from "./intent.service.js";
 import { summarizeConversation } from "./conversation-summary.service.js";
 import { saveAIUsage } from "./ai-usage.service.js";
+import { buildRAGContext } from "./rag/rag-context.service.js";
 
 const provider = new GeminiProvider();
 function formatAITextToPlainText(rawText: string): string {
@@ -16,19 +17,19 @@ function formatAITextToPlainText(rawText: string): string {
 
   // 1. Strip markdown syntax, keeping only the underlying text
   cleaned = cleaned
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")   // Images: ![alt](url) -> alt
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")    // Links: [text](url) -> text
-    .replace(/~~(.*?)~~/g, "$1")                // Strikethrough: ~~text~~
-    .replace(/\*\*\*(.*?)\*\*\*/g, "$1")        // Bold+italic: ***text***
-    .replace(/\*\*(.*?)\*\*/g, "$1")            // Bold: **text**
-    .replace(/\*(.*?)\*/g, "$1")                // Italics: *text*
-    .replace(/__(.*?)__/g, "$1")                // Bold underline: __text__
-    .replace(/_(.*?)_/g, "$1")                  // Italics underline: _text_
-    .replace(/```([\s\S]*?)```/g, "$1")         // Fenced code blocks
-    .replace(/`([^`]*)`/g, "$1")                // Inline code
-    .replace(/^#{1,6}\s+/gm, "")                // Headers: # Header -> Header
-    .replace(/^\s*>\s?/gm, "")                  // Blockquotes
-    .replace(/^\s*[-*_]{3,}\s*$/gm, "");        // Horizontal rules: ---, ***, ___
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1") // Images: ![alt](url) -> alt
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // Links: [text](url) -> text
+    .replace(/~~(.*?)~~/g, "$1") // Strikethrough: ~~text~~
+    .replace(/\*\*\*(.*?)\*\*\*/g, "$1") // Bold+italic: ***text***
+    .replace(/\*\*(.*?)\*\*/g, "$1") // Bold: **text**
+    .replace(/\*(.*?)\*/g, "$1") // Italics: *text*
+    .replace(/__(.*?)__/g, "$1") // Bold underline: __text__
+    .replace(/_(.*?)_/g, "$1") // Italics underline: _text_
+    .replace(/```([\s\S]*?)```/g, "$1") // Fenced code blocks
+    .replace(/`([^`]*)`/g, "$1") // Inline code
+    .replace(/^#{1,6}\s+/gm, "") // Headers: # Header -> Header
+    .replace(/^\s*>\s?/gm, "") // Blockquotes
+    .replace(/^\s*[-*_]{3,}\s*$/gm, ""); // Horizontal rules: ---, ***, ___
 
   // 2. Insert line breaks before list items / step markers embedded inline
   //    Matches: " 1. ", " 1) ", " Step 1:", " Day 1:", " - ", " * ", " • "
@@ -45,10 +46,6 @@ function formatAITextToPlainText(rawText: string): string {
   return cleaned.trim();
 }
 
-/**
- * Trims each line and collapses runs of blank lines down to a single
- * blank line, so paragraphs are separated consistently.
- */
 function collapseBlankLines(text: string): string {
   const lines = text.split("\n").map((line) => line.trim());
   const result: string[] = [];
@@ -71,7 +68,10 @@ function collapseBlankLines(text: string): string {
   return result.join("\n");
 }
 
-export const reply = async (threadId: string, onChunk: (messageId: string, chunk: string) => void) => {
+export const reply = async (
+  threadId: string,
+  onChunk: (messageId: string, chunk: string) => void,
+) => {
   const thread = await Thread.findById(threadId);
   if (!thread || !thread.isAI) {
     return null;
@@ -88,29 +88,50 @@ export const reply = async (threadId: string, onChunk: (messageId: string, chunk
       text: message.textMessage,
     };
   });
-  const latestUserMessage = [...messages].reverse().find(message => {
+  const latestUserMessage = [...messages].reverse().find((message) => {
     const sender = message.sender as any;
     return !sender.isAI;
-  })
+  });
+  let latestIntent: string | null = null;
   if (latestUserMessage?.textMessage) {
-    const intentResult = await parsedIntent(latestUserMessage.textMessage)
-    latestUserMessage.intent = intentResult.intent
-    await updateTravelContext(
-      threadId,
-      latestUserMessage.textMessage
-    )
-    await latestUserMessage.save()
+    const intentResult = await parsedIntent(latestUserMessage.textMessage);
+    latestIntent = intentResult.intent;
+    latestUserMessage.intent = latestIntent;
+    await updateTravelContext(threadId, latestUserMessage.textMessage);
+    await latestUserMessage.save();
   }
 
   const updatedThread = await Thread.findById(threadId);
   if (!updatedThread) {
     throw new Error("Thread not found");
   }
+  const RAG_INTENTS = new Set([
+    "destination_recommendation",
+    "general_travel",
+    "itinerary_generation",
+    "destination_comparison",
+    "hotel_recommendation",
+    "attraction_recommendation",
+    "travel_question",
+    //"weather_query",
+    "visa_information",
+    "packing_recommendation",
+  ]);
+
+  const shouldUseRAG = latestIntent !== null && RAG_INTENTS.has(latestIntent);
+
+  const ragContext =
+    shouldUseRAG && latestUserMessage?.textMessage
+      ? await buildRAGContext(latestUserMessage.textMessage, updatedThread.travelContext ?? {})
+      : "";
+  console.log(ragContext);
+
   const prompt = buildPrompt(
     history,
     undefined,
-    updatedThread.travelContext ?? {}
-  )
+    updatedThread.travelContext ?? {},
+    ragContext,
+  );
 
   const aiUser = await User.findOne({ isAI: true });
   if (!aiUser) {
@@ -131,15 +152,9 @@ export const reply = async (threadId: string, onChunk: (messageId: string, chunk
     textMessage: "",
   });
 
-  const aiResult = await provider.generateStream(
-    prompt,
-    (chunk) => {
-      onChunk(
-        aiMessage._id.toString(),
-        chunk
-      )
-    }
-  );
+  const aiResult = await provider.generateStream(prompt, (chunk) => {
+    onChunk(aiMessage._id.toString(), chunk);
+  });
 
   aiMessage.textMessage = formatAITextToPlainText(aiResult.text);
   await aiMessage.save();

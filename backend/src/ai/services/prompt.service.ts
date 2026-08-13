@@ -3,16 +3,28 @@ import { AIMessage } from "../types/ai-message.js";
 import type { TravelContext } from "../types/ai-message.js";
 
 export const buildPrompt = (
-    history: {
-        senderIsAI: boolean;
-        text: string
-    }[],
-    latestMessage?: string,
-    travelContext?: TravelContext,
-    conversationSummary?: string | null
+  history: {
+    senderIsAI: boolean;
+    text: string;
+  }[],
+  latestMessage?: string,
+  travelContext?: TravelContext,
+  conversationSummary?: string | null,
+  ragContext?: string,
 ): AIMessage[] => {
-    const conversation = history.map(m => `${m.senderIsAI ? "Assistant" : "User"}: ${m.text}`).join("\n");
-    const contextPrompt = travelContext ? `
+  const conversation = history
+    .map((m) => `${m.senderIsAI ? "Assistant" : "User"}: ${m.text}`)
+    .join("\n");
+  const knowledgePrompt = ragContext ? `
+    RETRIEVED TRAVEL KNOWLEDGE
+
+    The following information was retrieved from the travel knowledge base.
+    Use it when relevant.
+
+    ${ragContext}
+    ` : "";
+  const contextPrompt = travelContext
+    ? `
     TRAVEL CONTEXT
 
     Destination: ${travelContext.destination ?? "Not specified"}
@@ -21,36 +33,43 @@ export const buildPrompt = (
     End Date: ${travelContext.endDate ?? "Not Specified"}
     Travellers: ${travelContext.travellers ?? "Not Specified"}
     Budget: ${
-        travelContext.budget !== undefined ? `${travelContext.budget} ${travelContext.currency ?? ""}` : "Not Specified"
+      travelContext.budget !== undefined
+        ? `${travelContext.budget} ${travelContext.currency ?? ""}`
+        : "Not Specified"
     }
     Interests: ${
-        travelContext.interests?.length ? travelContext.interests.join(", ") : "Not specified"
+      travelContext.interests?.length
+        ? travelContext.interests.join(", ")
+        : "Not specified"
     }
     Travel Style: ${travelContext.travelStyle ?? "Not Specified"}
-    ` : "";
-    const summaryPrompt = conversationSummary ? `
+    `
+    : "";
+  const summaryPrompt = conversationSummary
+    ? `
     CONVERSATION SUMMARY
     ${conversationSummary}
-    ` : "";
+    `
+    : "";
 
-
-    const userPrompt = latestMessage?.trim()
-      ? `${contextPrompt}
+  const userPrompt = latestMessage?.trim()
+    ? `${contextPrompt}
+      ${knowledgePrompt}
       ${summaryPrompt}
       CONVERSATION HISTORY
       ${conversation}
       User: ${latestMessage.trim()}`
-      : `${contextPrompt}
+    : `${contextPrompt}
       CONVERSATION HISTORY
       ${conversation}`;
-    return [
-        {
-            role: "system",
-            content: travelSystemPrompts
-        },
-        {
-            role: "user",
-            content: userPrompt
-        }
-    ]
-}
+  return [
+    {
+      role: "system",
+      content: travelSystemPrompts,
+    },
+    {
+      role: "user",
+      content: userPrompt,
+    },
+  ];
+};

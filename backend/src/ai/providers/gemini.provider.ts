@@ -25,9 +25,7 @@ ASSISTANT:`;
     const response = await retry(
       () =>
         ai.models.generateContent({
-          model:
-            process.env.GEMINI_MODEL ||
-            "gemini-3.1-flash-lite",
+          model: process.env.GEMINI_MODEL || "gemini-3.1-flash-lite",
           contents: prompt,
         }),
       {
@@ -40,10 +38,10 @@ ASSISTANT:`;
   }
 
   async generateStream(
-  messages: AIMessage[],
-  onChunk: (chunk: string) => void,
-): Promise<AIGenerationResult> {
-  const sleep = (ms: number) =>
+    messages: AIMessage[],
+    onChunk: (chunk: string) => void,
+  ): Promise<AIGenerationResult> {
+    const sleep = (ms: number) =>
       new Promise((resolve) => setTimeout(resolve, ms));
     async function emitSlowly(text: string, onChunk: (chunk: string) => void) {
       const words = text.split(/(\s+)/);
@@ -52,70 +50,65 @@ ASSISTANT:`;
       }
       await sleep(35);
     }
-  const ai = getClient();
+    const ai = getClient();
 
-  const systemPrompt =
-    messages.find((m) => m.role === "system")?.content ?? "";
+    const systemPrompt =
+      messages.find((m) => m.role === "system")?.content ?? "";
 
-  const conversation = messages
-    .filter((m) => m.role !== "system")
-    .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
-    .join("\n");
+    const conversation = messages
+      .filter((m) => m.role !== "system")
+      .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
+      .join("\n");
 
-  const prompt = `${systemPrompt}
+    const prompt = `${systemPrompt}
 
 ${conversation}
 
 ASSISTANT:`;
 
-  const stream = await retry(
-    () =>
-      ai.models.generateContentStream({
-        model:
-          process.env.GEMINI_MODEL ||
-          "gemini-3.1-flash-lite",
-        contents: prompt,
-      }),
-    {
-      retries: 2,
-      delay: 1000,
-    },
-  );
+    const stream = await retry(
+      () =>
+        ai.models.generateContentStream({
+          model: process.env.GEMINI_MODEL || "gemini-3.1-flash-lite",
+          contents: prompt,
+        }),
+      {
+        retries: 2,
+        delay: 1000,
+      },
+    );
 
-  let fullText = "";
+    let fullText = "";
 
-  let inputToken = 0;
-  let outputToken = 0;
-  let totalToken = 0;
+    let inputToken = 0;
+    let outputToken = 0;
+    let totalToken = 0;
 
-  for await (const chunk of stream) {
-    const text = chunk.text ?? "";
+    for await (const chunk of stream) {
+      const text = chunk.text ?? "";
 
-    if (text) {
-      fullText += text;
-      await emitSlowly(text, onChunk);
+      if (text) {
+        fullText += text;
+        await emitSlowly(text, onChunk);
+      }
+
+      if (chunk.usageMetadata) {
+        inputToken = chunk.usageMetadata.promptTokenCount ?? inputToken;
+
+        outputToken = chunk.usageMetadata.candidatesTokenCount ?? outputToken;
+
+        totalToken = chunk.usageMetadata.totalTokenCount ?? totalToken;
+      }
     }
 
-    if (chunk.usageMetadata) {
-      inputToken =
-        chunk.usageMetadata.promptTokenCount ?? inputToken;
+    return {
+      text: fullText,
 
-      outputToken =
-        chunk.usageMetadata.candidatesTokenCount ?? outputToken;
-
-      totalToken =
-        chunk.usageMetadata.totalTokenCount ?? totalToken;
-    }
+      usage: {
+        inputToken,
+        outputToken,
+        totalToken,
+      },
+    };
   }
-
-  return {
-    text: fullText,
-
-    usage: {
-      inputToken,
-      outputToken,
-      totalToken,
-    },
-  };
-}
 }
