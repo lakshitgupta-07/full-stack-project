@@ -19,7 +19,7 @@ export const addKnowledgeDocument = async ({
 
     const chunks = chunkText(text, {
         chunkSize: 500,
-        overlap: 200
+        overlap: 50
     })
 
     if(!chunks.length) {

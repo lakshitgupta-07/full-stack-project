@@ -6,10 +6,11 @@ import { AuthStateService } from '../../core/services/auth-state.service';
 import { SocketService } from '../../core/services/socket.service';
 import { ChatMessage, Thread } from '../../core/models/chat.model';
 import { UploadService } from '../../core/services/upload.service';
+import { AiTextFormatPipe } from '../../pipes/ai-text-format-pipe';
 
 @Component({
   selector: 'app-chat-window',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AiTextFormatPipe],
   templateUrl: './chat-window.html',
   styleUrl: './chat-window.css',
 })

@@ -44,8 +44,7 @@ export class NewChatDialog {
       complete: () => {
         console.log("Complete")
       }
-    }
-  )
+    })
   }
 
   startConversation(user: any) {
