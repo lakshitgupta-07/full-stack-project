@@ -1,4 +1,6 @@
 const onlineUser = new Map<string, Set<string>>();
+const activeThreads = new Map<string, string>();
+
 
 export const addUser = (
     userId: string,
@@ -20,7 +22,8 @@ export const removeUser = (
     }
     sockets.delete(socketId)
     if(sockets.size === 0) {
-        onlineUser.delete(userId)
+        onlineUser.delete(userId);
+        activeThreads.delete(userId)
     }
 }
 
@@ -38,4 +41,23 @@ export const getSocketIds = (
 
 export const getOnlineUsers = () => {
     return [...onlineUser.keys()]
+}
+
+export const setActiveThread = (
+    userId: string,
+    threadId: string
+) => {
+    activeThreads.set(userId, threadId)
+}
+
+export const clearActiveThread = (
+    userId: string,
+) => {
+    activeThreads.delete(userId)
+}
+
+export const getActiveThread = (
+    userId: string
+) => {
+    return activeThreads.get(userId)
 }

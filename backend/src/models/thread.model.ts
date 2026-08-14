@@ -15,6 +15,7 @@ export interface IThread extends Document {
     },
     admins: any[],
     isAI: boolean,
+    unreadCount: Map<string, number>,
     assistantType: string,
     travelContext: {
         destination?: string,
@@ -87,6 +88,11 @@ const threadSchema = new Schema<IThread>(
         isAI: {
             type: Boolean,
             default: false
+        },
+        unreadCount: {
+            type: Map,
+            of: Number,
+            default: {}
         },
         assistantType: {
             type: String,

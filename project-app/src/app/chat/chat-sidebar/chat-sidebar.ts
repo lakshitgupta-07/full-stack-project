@@ -30,6 +30,7 @@ export class ChatSidebar {
     )
   }
   selectThread(thread: Thread) {
+    this.chatService.resetUnreadCount(thread._id);
     this.chatService.selectedThread.set(thread)
     this.socketService.joinThread(thread._id)
     this.socketService.getThreadMessage(
@@ -51,6 +52,11 @@ export class ChatSidebar {
       const otherUser = this.getOtherParticipants(thread);
       return otherUser?.username.toLowerCase().includes(query);
     });
+  }
+  getUnreadCount(thread: Thread): number {
+    const currentUserId = this.currentUser()?._id;
+    if (!currentUserId || !thread.unreadCount) return 0;
+    return thread.unreadCount[currentUserId] || 0;
   }
   openCreateGroup() {
     this.dialog.open();

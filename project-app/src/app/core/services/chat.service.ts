@@ -178,4 +178,43 @@ export class ChatService {
   clearCurrentConversation(): void {
     this.messages.set([])
   }
+  incrementUnreadCount(threadId: string) {
+  this.threads.update(threads =>
+    threads.map(thread => {
+      if (thread._id !== threadId) {
+        return thread;
+      }
+
+      return {
+        ...thread,
+        unreadCount: {
+          ...thread.unreadCount,
+          [this.authState.user?._id ?? ""]: 
+            (thread.unreadCount?.[this.authState.user?._id ?? ""] ?? 0) + 1
+        }
+      };
+    })
+  );
+}
+
+resetUnreadCount(threadId: string) {
+  this.threads.update(threads =>
+    threads.map(thread => {
+      if (thread._id !== threadId) {
+        return thread;
+      }
+
+      return {
+        ...thread,
+        unreadCount: {
+          ...thread.unreadCount,
+          [this.authState.user?._id ?? ""]: 0
+        }
+      };
+    }));
+  }
+  clearSelectedThread(): void {
+    this.selectedThread.set(null)
+    this.messages.set([])
+  }
 }

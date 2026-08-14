@@ -11,6 +11,9 @@ export interface ChatUser {
 }
 
 export interface Thread {
+  unreadCount: {
+  [userId: string]: number;
+};
   isAI: any;
   _id: string;
   participants: ChatUser[];

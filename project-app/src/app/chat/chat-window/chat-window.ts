@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, ViewChild, ElementRef, effect } from '@angular/core';
+import { Component, inject, ViewChild, ElementRef, effect, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '../../core/services/chat.service';
 import { AuthStateService } from '../../core/services/auth-state.service';
@@ -55,6 +55,10 @@ export class ChatWindow {
   }
 
   constructor() {
+    const thread = this.chatService.selectedThread();
+      if(thread) {
+        this.socketService.joinThread(thread._id)
+      }
     effect(() => {
       this.chatService.selectedThread();
       this.chatService.messages();
@@ -373,5 +377,19 @@ export class ChatWindow {
 
   closeImage() {
     this.openedImage = null;
+  }
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    const thread = this.chatService.selectedThread()
+    if(!thread) return;
+    this.socketService.leaveThread(thread._id)
+    clearTimeout(this.typingTimeout)
+    if(this.isRecording) this.stopRecording
+    this.openedImage = null
+    this.newMessageText = ''
+    this.selectedFile = null
+    this.isUploading = false
+    this.audioToggle = false
+    this.chatService.clearSelectedThread()
   }
 }

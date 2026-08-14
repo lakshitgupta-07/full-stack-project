@@ -28,13 +28,18 @@
             }
         </div>
         <div class="thread-info">
-            <h4>
-                @if(thread.isGroup) {
-                    {{ thread.groupName }}
-                } @else {
-                    {{ getOtherParticipants(thread)?.username }}
+            <div class="thread-name-row">
+                <h4>
+                    @if(thread.isGroup) {
+                        {{ thread.groupName }}
+                    } @else {
+                        {{ getOtherParticipants(thread)?.username }}
+                    }
+                </h4>
+                @if(getUnreadCount(thread) > 0) {
+                    <span class="unread-badge">{{ getUnreadCount(thread) }}</span>
                 }
-            </h4>
+            </div>
         </div>
     </div>
     } @empty {

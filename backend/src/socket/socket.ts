@@ -7,12 +7,14 @@ import { createThread } from "./handlers/threads/createThread.js";
 import { acceptThread } from "./handlers/threads/acceptThread.js";
 import { sendMessage } from "./handlers/message/sendMessage.js";
 import { getMessageThread } from "./handlers/message/getThreadMessage.js";
-import { addUser, removeUser, getOnlineUsers } from "./presence/presence.js";
+import { addUser, removeUser, getOnlineUsers, setActiveThread, clearActiveThread } from "./presence/presence.js";
 import { markSeen } from "./handlers/message/markSeen.js";
 import { messageDelivered } from "./handlers/message/messageDelivered.js";
 import { getMyThread } from "./handlers/threads/getMyThreads.js";
 import { createGroup } from "./handlers/group/createGroup.js";
-import { success } from "zod";
+import { Thread } from "../models/thread.model.js";
+
+
 let io: Server;
 
 export const initializeSocket = (server: HttpServer) => {
@@ -174,6 +176,40 @@ export const initializeSocket = (server: HttpServer) => {
             }
         )
         authSocket.on(
+            "mark-thread-read",
+            async(
+                payload: {threadId: string},
+                callback: (response: any) => void
+            ) => {
+                try {
+                    const thread = await Thread.findOne({
+                        _id: payload.threadId,
+                        participants: authSocket.user._id
+                    });
+                    if(!thread) {
+                        callback({
+                            success: false,
+                            error: "Thread not found"
+                        });
+                        return;
+                    }
+                    const userId = authSocket.user._id.toString();
+                    thread.unreadCount.set(userId, 0)
+                    await thread.save()
+                    callback({
+                        success: true,
+                        threadId: payload.threadId,
+                        unreadCount: 0
+                    })
+                } catch (err: any) {
+                    callback({
+                        success: false,
+                        error: err.message
+                    })
+                }
+            }
+        )
+        authSocket.on(
             "get-thread-message",
             async (payload, callback) => {
                 try {
@@ -198,10 +234,45 @@ export const initializeSocket = (server: HttpServer) => {
                 },
                 callback
             ) => {
+                if(authSocket.activeThreadId) {
+                    authSocket.leave(authSocket.activeThreadId)
+                }
                 authSocket.join(payload.threadId);
+                authSocket.activeThreadId = payload.threadId;
                 callback({
-                    success: true
+                    success: true,
+                    threadId: payload.threadId,
+                    unreadCount: 0
                 });
+            }
+        )
+        authSocket.on(
+            "leave-thread",
+            (
+                payload: {threadId: string},
+                callback?: (response: any) => void,
+            ) => {
+                try {
+                    if(!payload?.threadId) {
+                        callback?.({
+                            success: false,
+                            error: "Thread Id required"
+                        })
+                        return
+                    }
+                    authSocket.leave(payload.threadId)
+                    if(authSocket.activeThreadId === payload.threadId) {
+                        authSocket.activeThreadId = undefined
+                    }
+                    callback?.({
+                        success: true,
+                    })
+                } catch (err: any) {
+                    callback?.({
+                        success: false,
+                        error: err.message
+                    })
+                }
             }
         )
         authSocket.on(
@@ -241,11 +312,11 @@ export const initializeSocket = (server: HttpServer) => {
             "restart-ai-conversation",
             async (
                 payload: {threadId: string},
-                callback: (response: any) => void,
+                callback?: (response: any) => void,
             ) => {
                 try {
                     if(!payload?.threadId) {
-                        callback({
+                        callback?.({
                             success: false,
                             error: "Thread Id is required",
                         });
@@ -253,13 +324,13 @@ export const initializeSocket = (server: HttpServer) => {
                     }
                     const {restartConversation} = await import ("../ai/services/restart-conversation.service.js")
                     const thread = restartConversation(payload.threadId, authSocket.user._id.toString())
-                    callback({
+                    callback?.({
                         success: true,
                         thread
                     });
                 } catch (err: any) {
                     console.error("Restart AI conversation failed", err)
-                    callback({
+                    callback?.({
                         success: false,
                         error: err.message
                     })
@@ -270,11 +341,11 @@ export const initializeSocket = (server: HttpServer) => {
             "clear-conversation", 
             async(
                 payload: { threadId: string },
-                callback: (response: any) => void,
+                callback?: (response: any) => void,
             ) => {
                 try {
                     if(!payload?.threadId) {
-                        callback({
+                        callback?.({
                             success: false,
                             error: "Thread Id is required"
                         })
@@ -285,12 +356,12 @@ export const initializeSocket = (server: HttpServer) => {
                     authSocket.to(payload.threadId).emit("conversation-cleared", {
                         threadId: payload.threadId
                     })
-                    callback({
+                    callback?.({
                         success: true,
                         thread
                     })
                 } catch (err: any) {
-                    callback({
+                    callback?.({
                         success: false,
                         error: err.message
                     })
