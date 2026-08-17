@@ -115,7 +115,6 @@ export const reply = async (
     "hotel_recommendation",
     "attraction_recommendation",
     "travel_question",
-    //"weather_query",
     "visa_information",
     "packing_recommendation",
   ]);

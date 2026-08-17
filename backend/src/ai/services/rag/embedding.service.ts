@@ -48,7 +48,7 @@ export const generateQueryEmbedding = async(
                 contents: query,
                 config: {
                     taskType: "RETRIEVAL_QUERY",
-                    outputDimensionality: 786
+                    outputDimensionality: 768
                 }
             }),
         {
