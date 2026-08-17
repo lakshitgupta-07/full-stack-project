@@ -16,10 +16,8 @@ function formatAITextToPlainText(rawText: string): string {
   let cleaned = rawText;
   cleaned = cleaned.replace(/\r\n/g, "\n");
 
-  
   cleaned = cleaned.replace(/^\s*#{1,6}\s+(.*)$/gm, "\n\n$1\n\n");
 
- 
   cleaned = cleaned.replace(/^[ \t]*(?:[-*+•]|\d+[.)])\s+/gm, "\n• ");
 
   const inlineListBoundaryRegex =
@@ -27,19 +25,19 @@ function formatAITextToPlainText(rawText: string): string {
   cleaned = cleaned.replace(inlineListBoundaryRegex, "\n\n");
 
   cleaned = cleaned
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1") 
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") 
-    .replace(/^\[([^\]]+)\]:\s*\S+.*$/gm, "") 
-    .replace(/~~(.*?)~~/g, "$1") 
-    .replace(/\*\*\*(.*?)\*\*\*/g, "$1") 
-    .replace(/\*\*(.*?)\*\*/g, "$1") 
-    .replace(/(?<!\*)\*([^*\n]+?)\*(?!\*)/g, "$1") 
-    .replace(/__(.*?)__/g, "$1") 
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/^\[([^\]]+)\]:\s*\S+.*$/gm, "")
+    .replace(/~~(.*?)~~/g, "$1")
+    .replace(/\*\*\*(.*?)\*\*\*/g, "$1")
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/(?<!\*)\*([^*\n]+?)\*(?!\*)/g, "$1")
+    .replace(/__(.*?)__/g, "$1")
     .replace(/(?<!_)_([^_\n]+?)_(?!_)/g, "$1")
-    .replace(/```([\s\S]*?)```/g, "$1") 
-    .replace(/`([^`]*)`/g, "$1") 
-    .replace(/^\s*>\s?/gm, "") 
-    .replace(/^\s*\|.*\|\s*$/gm, "") 
+    .replace(/```([\s\S]*?)```/g, "$1")
+    .replace(/`([^`]*)`/g, "$1")
+    .replace(/^\s*>\s?/gm, "")
+    .replace(/^\s*\|.*\|\s*$/gm, "")
     .replace(/^\s*[-*_]{3,}\s*$/gm, "");
   cleaned = collapseBlankLines(cleaned);
 
@@ -68,7 +66,6 @@ function collapseBlankLines(text: string): string {
 
   return result.join("\n");
 }
-
 
 export const reply = async (
   threadId: string,
@@ -123,7 +120,10 @@ export const reply = async (
 
   const ragContext =
     shouldUseRAG && latestUserMessage?.textMessage
-      ? await buildRAGContext(latestUserMessage.textMessage, updatedThread.travelContext ?? {})
+      ? await buildRAGContext(
+          latestUserMessage.textMessage,
+          updatedThread.travelContext ?? {},
+        )
       : "";
   console.log(ragContext);
 
@@ -157,9 +157,7 @@ export const reply = async (
   const aiResult = await provider.generateStream(prompt, (chunk) => {
     onChunk(aiMessage._id.toString(), chunk);
   });
-  const formattedResult = formatAITextToPlainText(aiResult.text)
-
-  aiMessage.textMessage = formattedResult
+  aiMessage.textMessage = aiResult.text;
   await aiMessage.save();
 
   // Save the AI usage

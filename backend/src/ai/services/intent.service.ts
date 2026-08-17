@@ -19,6 +19,7 @@ export const parsedIntent = async (
     - "destination_comparison"
     - "hotel_recommendation"
     - "attraction_recommendation"
+    - "weather_query"
     - "travel_question"
     - "weather_query"
     - "visa_information"

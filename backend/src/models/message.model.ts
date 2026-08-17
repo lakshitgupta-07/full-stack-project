@@ -93,6 +93,7 @@ const messageSchema = new Schema<IMessage> (
                 "destination_recommendation",
                 "plan_trip",
                 "create_itinerary",
+                "weather_query",
                 "hotel_recommendation",
                 "destination_comparison",
                 "budget_planning",

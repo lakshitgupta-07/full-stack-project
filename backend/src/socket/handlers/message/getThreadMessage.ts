@@ -19,6 +19,6 @@ export const getMessageThread = async(
     if(!isParticipant) {
         throw new Error("Unauthorized")
     }
-    const message = await Message.find({threadId: payload.threadId}).populate("sender", "username avatar").populate("receiver", "username avatar").sort({createdAt: 1})
+    const message = await Message.find({threadId: payload.threadId}).populate("sender", "username avatar isAI").populate("receiver", "username avatar isAI").sort({createdAt: 1})
     return message
 }

@@ -47,11 +47,11 @@
         <img class="chat-image" [src]="imageUrl" (click)="openImage(imageUrl)">
         }
         @if(msg.textMessage) {
-          @if(msg.sender.isAI) {
-            <div class="ai-text" [innerHTML]="msg.textMessage | aiTextFormat"></div>
-          }@else{
-            <p>{{ msg.textMessage }}</p>
-          }
+        @if(msg.sender.isAI) {
+        <div class="ai-text" [innerHTML]="msg.textMessage | aiTextFormat"></div>
+        }@else{
+        <p>{{ msg.textMessage }}</p>
+        }
         }
         @if(msg.video?.url; as videoUrl) {
         <video class="chat-video" controls>
