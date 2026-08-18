@@ -7,9 +7,7 @@ import { getMcpClient } from "../services/mcp/client.js";
 import { getGeminiMcpTools } from "../services/mcp/gemini-mcp.adapter.js";
 
 export class GeminiProvider implements AIProvider {
-  /**
-   * Non-streaming Gemini generation with MCP tool support.
-   */
+
   async generate(messages: AIMessage[]): Promise<string> {
     const ai = getClient();
 
@@ -27,20 +25,11 @@ ${conversation}
 
 ASSISTANT:`;
 
-    /**
-     * Get MCP client.
-     */
     const mcpClient = await getMcpClient();
 
-    /**
-     * Discover MCP tools and convert them
-     * into Gemini function declarations.
-     */
+
     const mcpTools = await getGeminiMcpTools(mcpClient);
 
-    /**
-     * First Gemini request.
-     */
     const response = await retry(
       () =>
         ai.models.generateContent({
@@ -63,58 +52,30 @@ ASSISTANT:`;
       },
     );
 
-    /**
-     * Keep Gemini's ORIGINAL model parts.
-     *
-     * This is important for Gemini 3 because
-     * functionCall parts can contain a thoughtSignature.
-     */
+
     const modelParts =
       response.candidates?.[0]?.content?.parts ?? [];
 
-    /**
-     * Find the function call, if Gemini requested one.
-     */
+
     const functionCallPart = modelParts.find(
       (part) => part.functionCall,
     );
 
     const functionCall = functionCallPart?.functionCall;
 
-    /**
-     * Gemini did not request a tool.
-     *
-     * Existing behavior continues normally.
-     */
     if (!functionCall?.name) {
       return response.text ?? "";
     }
 
-    /**
-     * Gemini requested an MCP tool.
-     */
     const toolName = functionCall.name;
 
     const toolArgs = functionCall.args ?? {};
 
-    /**
-     * Execute the MCP tool.
-     */
     const toolResult = await mcpClient.callTool({
       name: toolName,
       arguments: toolArgs,
     });
 
-    /**
-     * Send the MCP result back to Gemini.
-     *
-     * IMPORTANT:
-     *
-     * We use the ORIGINAL modelParts instead
-     * of reconstructing the functionCall.
-     *
-     * This preserves thoughtSignature.
-     */
     const finalResponse = await retry(
       () =>
         ai.models.generateContent({
@@ -169,9 +130,6 @@ ASSISTANT:`;
     return finalResponse.text ?? "";
   }
 
-  /**
-   * Streaming Gemini generation with MCP tool support.
-   */
   async generateStream(
     messages: AIMessage[],
     onChunk: (chunk: string) => void,
@@ -179,10 +137,6 @@ ASSISTANT:`;
     const sleep = (ms: number) =>
       new Promise((resolve) => setTimeout(resolve, ms));
 
-    /**
-     * Emits the final response slowly to preserve
-     * the existing frontend streaming behavior.
-     */
     async function emitSlowly(
       text: string,
       onChunk: (chunk: string) => void,
@@ -212,19 +166,11 @@ ${conversation}
 
 ASSISTANT:`;
 
-    /**
-     * Get MCP client.
-     */
     const mcpClient = await getMcpClient();
 
-    /**
-     * Discover MCP tools.
-     */
+
     const mcpTools = await getGeminiMcpTools(mcpClient);
 
-    /**
-     * First Gemini streaming request.
-     */
     const stream = await retry(
       () =>
         ai.models.generateContentStream({
@@ -253,27 +199,15 @@ ASSISTANT:`;
     let outputToken = 0;
     let totalToken = 0;
 
-    /**
-     * Store Gemini's ORIGINAL model parts.
-     *
-     * We must preserve these parts because
-     * Gemini 3 function calls can contain
-     * thoughtSignature.
-     */
+
     const modelParts: any[] = [];
 
-    /**
-     * Store the original functionCall part.
-     */
+
     let functionCallPart: any | undefined;
 
-    /**
-     * Consume Gemini stream.
-     */
+
     for await (const chunk of stream) {
-      /**
-       * Capture token usage.
-       */
+
       if (chunk.usageMetadata) {
         inputToken =
           chunk.usageMetadata.promptTokenCount ?? inputToken;
@@ -285,9 +219,6 @@ ASSISTANT:`;
           chunk.usageMetadata.totalTokenCount ?? totalToken;
       }
 
-      /**
-       * Capture all original Gemini parts.
-       */
       for (const candidate of chunk.candidates ?? []) {
         for (const part of candidate.content?.parts ?? []) {
           modelParts.push(part);
@@ -298,9 +229,6 @@ ASSISTANT:`;
         }
       }
 
-      /**
-       * Capture normal text.
-       */
       const text = chunk.text ?? "";
 
       if (text) {
@@ -308,16 +236,10 @@ ASSISTANT:`;
       }
     }
 
-    /**
-     * Extract function call from the ORIGINAL part.
-     */
+
     const functionCall = functionCallPart?.functionCall;
 
-    /**
-     * Gemini did not request an MCP tool.
-     *
-     * Preserve existing streaming behavior.
-     */
+
     if (!functionCall?.name) {
       await emitSlowly(fullText, onChunk);
 
@@ -332,31 +254,17 @@ ASSISTANT:`;
       };
     }
 
-    /**
-     * Gemini requested an MCP tool.
-     */
+   
     const toolName = functionCall.name;
 
     const toolArgs = functionCall.args ?? {};
 
-    /**
-     * Execute MCP tool.
-     */
     const toolResult = await mcpClient.callTool({
       name: toolName,
       arguments: toolArgs,
     });
 
-    /**
-     * Send the MCP result back to Gemini.
-     *
-     * IMPORTANT:
-     *
-     * We DO NOT recreate the functionCall here.
-     *
-     * modelParts contains Gemini's original
-     * functionCall + thoughtSignature.
-     */
+
     const finalResponse = await retry(
       () =>
         ai.models.generateContent({
@@ -364,9 +272,7 @@ ASSISTANT:`;
             process.env.GEMINI_MODEL || "gemini-3.1-flash-lite",
 
           contents: [
-            /**
-             * Original user prompt.
-             */
+      
             {
               role: "user",
               parts: [
@@ -376,19 +282,12 @@ ASSISTANT:`;
               ],
             },
 
-            /**
-             * Original Gemini model response.
-             *
-             * Preserves thoughtSignature.
-             */
             {
               role: "model",
               parts: modelParts,
             },
 
-            /**
-             * MCP result.
-             */
+    
             {
               role: "user",
               parts: [
@@ -408,14 +307,9 @@ ASSISTANT:`;
       },
     );
 
-    /**
-     * Final Gemini answer.
-     */
+
     const finalText = finalResponse.text ?? "";
 
-    /**
-     * Stream the final answer to the frontend.
-     */
     await emitSlowly(finalText, onChunk);
 
     return {
