@@ -105,6 +105,12 @@
 </div>
 
 @if(thread.status === 'active') {
+@if(voiceError) {
+<div class="voice-error-toast" (click)="dismissVoiceError()">
+  <span class="voice-error-icon">⚠️</span>
+  <span class="voice-error-text">{{ voiceError }}</span>
+</div>
+}
 <div class="message-input-bar">
   @if(chatService.selectedThread()){
 
@@ -143,7 +149,7 @@
     @
     <input hidden type="file" accept="image/*, video/*, audio/*" (change)="onFileSelected($event)">
   </label>
-  <button (click)="toggleMic()">
+  <button type="button" (click)="toggleMic()" [class.listening]="isAiListening || isRecording">
     🎤
   </button>
   @if(isRecording) {

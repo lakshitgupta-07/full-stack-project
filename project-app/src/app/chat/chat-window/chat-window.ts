@@ -7,6 +7,7 @@ import { SocketService } from '../../core/services/socket.service';
 import { ChatMessage, Thread } from '../../core/models/chat.model';
 import { UploadService } from '../../core/services/upload.service';
 import { AiTextFormatPipe } from '../../pipes/ai-text-format-pipe';
+import { SpeechRecognitionService } from '../../core/services/speech-recogination.service';
 
 @Component({
   selector: 'app-chat-window',
@@ -21,7 +22,9 @@ export class ChatWindow {
   private socketService = inject(SocketService);
   private typingTimeout: any;
   private uploadService = inject(UploadService);
+  private speechRecoginition = inject(SpeechRecognitionService);
 
+  isAiListening = false;
   newMessageText = '';
 
   selectedFile: File | null = null;
@@ -36,6 +39,8 @@ export class ChatWindow {
   recordingTime = 0;
   recordTimer: any;
   audioToggle: boolean = false;
+  voiceError: string = '';
+  private voiceErrorTimeout: any;
 
   get currentUser() {
     return this.authState.user;
@@ -56,9 +61,9 @@ export class ChatWindow {
 
   constructor() {
     const thread = this.chatService.selectedThread();
-      if(thread) {
-        this.socketService.joinThread(thread._id)
-      }
+    if (thread) {
+      this.socketService.joinThread(thread._id);
+    }
     effect(() => {
       this.chatService.selectedThread();
       this.chatService.messages();
@@ -130,15 +135,16 @@ export class ChatWindow {
         avatar: currentUser.avatar
           ? { url: currentUser.avatar.url, publicId: currentUser.avatar.publicId }
           : { url: '', publicId: '' },
-        isAI: false
+        isAI: false,
       },
       receiver: otherParticipant,
       textMessage: text,
-      image: !isVideo && !isAudio && this.previewUrl ? { url: this.previewUrl, publicId: '' } : null,
+      image:
+        !isVideo && !isAudio && this.previewUrl ? { url: this.previewUrl, publicId: '' } : null,
       video: isVideo && this.previewUrl ? { url: this.previewUrl, publicId: '' } : null,
       audio: isAudio && this.previewUrl ? { url: this.previewUrl, publicId: '' } : null,
       threadId: thread._id,
-      createdAt: new Date(),//.toISOString(),
+      createdAt: new Date(), //.toISOString(),
       isAI: false,
       status: 'sending',
     };
@@ -228,7 +234,7 @@ export class ChatWindow {
         avatar: currentUser.avatar
           ? { url: currentUser.avatar.url, publicId: currentUser.avatar.publicId }
           : { url: '', publicId: '' },
-        isAI: false
+        isAI: false,
       },
       receiver: otherParticipant,
       textMessage: text,
@@ -236,7 +242,7 @@ export class ChatWindow {
       video: null,
       audio: { url: URL.createObjectURL(file), publicId: '' },
       threadId: thread._id,
-      createdAt: new Date(),//.toISOString(),
+      createdAt: new Date(), //.toISOString(),
       isAI: false,
       status: 'sending',
     };
@@ -263,7 +269,7 @@ export class ChatWindow {
       error: (err) => {
         console.error('Voice upload failed:', err);
         this.chatService.markMessageSendFailed(tempId);
-      }
+      },
     });
   }
 
@@ -308,62 +314,209 @@ export class ChatWindow {
       return;
     }
 
-    const confirmed = window.confirm("Start a fresh conversation? Your chat histroy will be deleted and Travel AI start with fresh context")
+    const confirmed = window.confirm(
+      'Start a fresh conversation? Your chat histroy will be deleted and Travel AI start with fresh context',
+    );
 
     if (!confirmed) return;
-    this.socketService.restartConversation(
-      thread._id,
-      (response: any) => {
-        if (!response?.success) {
-          console.error("Failed to restart conversation", response?.error);
-          return
-        }
-        this.chatService.clearCurrentConversation();
-        this.newMessageText = ''
-        this.selectedFile = null
-        this.previewUrl = null
-        this.openedImage = null
-        this.isUploading = false
-
-        clearTimeout(this.typingTimeout)
-        this.isRecording = false
-        this.audioToggle = false
-
-        console.log("AI conversation restarted")
+    this.socketService.restartConversation(thread._id, (response: any) => {
+      if (!response?.success) {
+        console.error('Failed to restart conversation', response?.error);
+        return;
       }
-    )
+      this.chatService.clearCurrentConversation();
+      this.newMessageText = '';
+      this.selectedFile = null;
+      this.previewUrl = null;
+      this.openedImage = null;
+      this.isUploading = false;
+
+      clearTimeout(this.typingTimeout);
+      this.isRecording = false;
+      this.audioToggle = false;
+
+      console.log('AI conversation restarted');
+    });
   }
 
   clearChat(): void {
     const thread = this.chatService.selectedThread();
-    if(!thread || thread.isAI) return;
+    if (!thread || thread.isAI) return;
 
-    const confirmed = window.confirm("Clear chat will delete all the messages and media received which cannot be recovered.")
-    if(!confirmed) return;
-    this.socketService.clearChat(
-      thread._id,
-      (response: any) => {
-        if(!response?.success) {
-          console.error("Failed to restart conversation", response?.error);
-          return
-        }
-        this.chatService.clearCurrentConversation();
-        this.newMessageText = ""
-        this.selectedFile = null
-        this.previewUrl = null
-        this.openedImage = null
-        this.isUploading = false
-
-        clearTimeout(this.typingTimeout)
-        this.isRecording = false
-        this.audioToggle = false
+    const confirmed = window.confirm(
+      'Clear chat will delete all the messages and media received which cannot be recovered.',
+    );
+    if (!confirmed) return;
+    this.socketService.clearChat(thread._id, (response: any) => {
+      if (!response?.success) {
+        console.error('Failed to restart conversation', response?.error);
+        return;
       }
-    )
+      this.chatService.clearCurrentConversation();
+      this.newMessageText = '';
+      this.selectedFile = null;
+      this.previewUrl = null;
+      this.openedImage = null;
+      this.isUploading = false;
+
+      clearTimeout(this.typingTimeout);
+      this.isRecording = false;
+      this.audioToggle = false;
+    });
+  }
+  private sendAiSpeechMessage(text: string) {
+    const thread = this.chatService.selectedThread();
+
+    if (!thread || !thread.isAI) {
+      return;
+    }
+
+    const currentUser = this.currentUser;
+
+    if (!currentUser) {
+      return;
+    }
+
+    const otherParticipant = this.getOtherParticipants(thread);
+
+    if (!otherParticipant) {
+      return;
+    }
+
+    const tempId = crypto.randomUUID();
+
+    const tempMessage: ChatMessage = {
+      _id: tempId,
+
+      sender: {
+        _id: currentUser._id,
+        username: currentUser.username,
+        avatar: currentUser.avatar
+          ? {
+              url: currentUser.avatar.url,
+              publicId: currentUser.avatar.publicId,
+            }
+          : {
+              url: '',
+              publicId: '',
+            },
+        isAI: false,
+      },
+
+      receiver: otherParticipant,
+
+      textMessage: text,
+
+      image: null,
+      video: null,
+      audio: null,
+
+      threadId: thread._id,
+
+      createdAt: new Date(),
+
+      isAI: false,
+
+      status: 'sending',
+    };
+
+    this.chatService.addTemporaryMessage(tempMessage);
+
+    this.newMessageText = '';
+
+    this.socketService.emit(
+      'send-message',
+      {
+        threadId: thread._id,
+        textMessage: text,
+      },
+      (response: any) => {
+        if (response.success) {
+          this.chatService.replaceTemporaryMessage(tempId, response.message);
+        } else {
+          console.error('Failed to send AI speech message:', response.error);
+
+          this.chatService.markMessageSendFailed(tempId);
+        }
+      },
+    );
+  }
+
+  startAiSpeech() {
+    if (!this.speechRecoginition.isSupported) {
+      console.error('Speech recoginition is not supported in this browser.');
+    }
+    this.newMessageText = '';
+    this.isAiListening = true;
+    this.speechRecoginition.start(
+      (transcript) => {
+        this.newMessageText = transcript;
+      },
+      () => {
+        this.isAiListening = false;
+      },
+      (error) => {
+        this.isAiListening = false;
+
+        switch (error) {
+          case 'no-speech':
+            this.showVoiceError('No speech detected.');
+            break;
+
+          case 'audio-capture':
+            this.showVoiceError('Microphone could not be accessed.');
+            break;
+
+          case 'not-allowed':
+            this.showVoiceError('Microphone permission was denied.');
+            break;
+
+          case 'network':
+            this.showVoiceError('Speech recognition network error.');
+            break;
+
+          default:
+            this.showVoiceError('Speech recognition error:');
+        }
+      },
+    );
+  }
+  stopAiSpeech() {
+    this.speechRecoginition.stop();
+    this.isAiListening = false;
+
+    const text = this.newMessageText.trim();
+    if (!text) {
+      this.showVoiceError("I didn't hear anything. Please try again.");
+      return;
+    }
+
+    this.sendAiSpeechMessage(text);
+  }
+
+  private showVoiceError(message: string) {
+    this.voiceError = message;
+    clearTimeout(this.voiceErrorTimeout);
+    this.voiceErrorTimeout = setTimeout(() => {
+      this.voiceError = '';
+    }, 3000);
+  }
+
+  dismissVoiceError() {
+    clearTimeout(this.voiceErrorTimeout);
+    this.voiceError = '';
   }
 
   toggleMic() {
-    this.audioToggle = !this.audioToggle;
+    const thread = this.chatService.selectedThread();
+    if (!thread) return;
 
+    if (thread.isAI) {
+      if (this.isAiListening) this.stopAiSpeech();
+      else this.startAiSpeech();
+    }
+
+    this.audioToggle = !this.audioToggle;
     if (this.audioToggle) {
       this.startRecording();
     } else {
@@ -380,16 +533,18 @@ export class ChatWindow {
   }
   @HostListener('document:keydown.escape')
   onEscape(): void {
-    const thread = this.chatService.selectedThread()
-    if(!thread) return;
-    this.socketService.leaveThread(thread._id)
-    clearTimeout(this.typingTimeout)
-    if(this.isRecording) this.stopRecording
-    this.openedImage = null
-    this.newMessageText = ''
-    this.selectedFile = null
-    this.isUploading = false
-    this.audioToggle = false
-    this.chatService.clearSelectedThread()
+    const thread = this.chatService.selectedThread();
+    if (!thread) return;
+    this.socketService.leaveThread(thread._id);
+    clearTimeout(this.typingTimeout);
+    clearTimeout(this.voiceErrorTimeout);
+    this.voiceError = '';
+    if (this.isRecording) this.stopRecording;
+    this.openedImage = null;
+    this.newMessageText = '';
+    this.selectedFile = null;
+    this.isUploading = false;
+    this.audioToggle = false;
+    this.chatService.clearSelectedThread();
   }
 }

@@ -34,8 +34,8 @@ export const sendMessage = async (
   const hasText = payload.textMessage && payload.textMessage.trim().length > 0;
   const hasImage = payload.image && payload.image.url;
   const hasVideo = payload.video && payload.video.url;
-  const hasAudio = payload.audio && payload.audio.url;
-  if (!hasText && !hasImage && !hasVideo && !hasAudio) {
+  // const hasAudio = payload.audio && payload.audio.url;
+  if (!hasText && !hasImage && !hasVideo) {
     throw new Error("Message cannot be empty");
   }
   const thread = await Thread.findOne({
