@@ -1,6 +1,5 @@
-@if (callState === 'calling' || callState === 'incoming' || callState === 'connected') {
+<!-- @if (callState === 'calling' || callState === 'incoming' || callState === 'connected') {
 <div class="call-window" [class.collapsed]="isCallCollapsed">
-  <!-- Collapsed pill -->
   @if (isCallCollapsed) {
   <div class="call-pill" (click)="toggleCallCollapse()">
     <span class="pill-icon" [class.pulse]="callState !== 'connected'">📞</span>
@@ -19,6 +18,9 @@
       title="{{ isMuted ? 'Unmute' : 'Mute' }}">
       {{ isMuted ? '🔇' : '🎤' }}
     </button>
+    <button class="camera-on-off-btn" [class.active]="isCameraOf" (click)="toggleCamera(); $event.stopPropagation()" title="{{ isCameraOf ? 'Camera on' : 'Camera off'}}">
+      {{ isCameraOf ? "📷 camera on" : "📷 camera off" }}
+    </button>
     <button class="pill-end-btn" (click)="endCall(); $event.stopPropagation()" title="End call">
       ✕
     </button>
@@ -26,7 +28,6 @@
   </div>
   }
 
-  <!-- Expanded window -->
   @if (!isCallCollapsed) {
   <div class="call-card">
     <button class="collapse-btn" (click)="toggleCallCollapse()" title="Minimize">
@@ -56,6 +57,269 @@
     <div class="call-actions">
       <button class="mute-btn" [class.active]="isMuted" (click)="toggleMute()">
         {{ isMuted ? '🔇 Unmute' : '🎤 Mute' }}
+      </button>
+      <button class="on-off-btn" [class.active]="isCameraOf" (click)="toggleCamera()">
+        {{ isCameraOf ? "📷 camera on" : "📷 camera off" }}
+      </button>
+      <button class="end-call-btn" (click)="endCall()">End Call</button>
+    </div>
+    }
+    }
+  </div>
+  }
+</div>
+}
+
+<audio #remoteAudio autoplay playsinline style="display: none;"></audio>
+<video #remoteVideo autoplay playsinline></video>
+<video #localVideo autoplay muted playsinline></video>
+
+@if(chatService.selectedThread(); as thread) {
+<div class="chat-header">
+  <h3>
+    @if(thread.isGroup) {
+    {{ thread.groupName }}
+    } @else {
+    {{ getOtherParticipants(thread)?.username }}
+    }
+  </h3>
+  <div class="action-headers">
+    <button *ngIf="!chatService.selectedThread()?.isAI" type="button" class="call-btn" (click)="testCall()">
+      📞
+    </button>
+
+    <button *ngIf="chatService.selectedThread()?.isAI" type="button" class="restart-chat-btn"
+      (click)="restartConversation()">
+      ↺ Restart conversation
+    </button>
+    <button *ngIf="!chatService.selectedThread()?.isAI" type="button" class="restart-chat-btn" (click)="clearChat()">
+      ↺ Clear Chat
+    </button>
+  </div>
+</div>
+
+<div class="messages-container" #messagesContainer>
+  @if(thread.status === 'pending') {
+  <div class="pending-overlay">
+    @if(thread.createdBy._id === currentUser?._id) {
+    <div class="pending-card">
+      <span class="status-icon">🕒</span>
+      <h4>Request Pending</h4>
+      <p>Waiting for {{ getOtherParticipants(thread)?.username }} to accept your chat request.</p>
+    </div>
+    } @else {
+    <div class="pending-card accept-card">
+      <span class="status-icon">✉️</span>
+      <h4>New Chat Request</h4>
+      <p>{{ getOtherParticipants(thread)?.username }} wants to start a conversation with you.</p>
+      <button class="accept-btn" (click)="acceptThread(thread)">
+        Accept Request
+      </button>
+    </div>
+    }
+  </div>
+  } @else {
+  <div class="chat-messages">
+    @for(msg of chatService.messages(); track msg._id) {
+    <div class="message-row"
+      [ngClass]="{'sent': msg.sender._id === currentUser?._id, 'received': msg.sender._id !== currentUser?._id}">
+      <div class="message-bubble">
+        @if(msg.image?.url; as imageUrl) {
+        <img class="chat-image" [src]="imageUrl" (click)="openImage(imageUrl)">
+        }
+        @if(msg.textMessage) {
+        @if(msg.sender.isAI) {
+        <div class="ai-text" [innerHTML]="msg.textMessage | aiTextFormat"></div>
+        }@else{
+        <p>{{ msg.textMessage }}</p>
+        }
+        }
+        @if(msg.video?.url; as videoUrl) {
+        <video class="chat-video" controls>
+          <source [src]="videoUrl">
+        </video>
+        }
+        @if(msg.audio?.url; as audioUrl) {
+        <audio class="chat-audio" controls>
+          <source [src]="audioUrl">
+        </audio>
+        }
+        @if(openedImage) {
+        <div class="image-overlay" (click)="closeImage()">
+          <img [src]="openedImage">
+        </div>
+        }
+        <div class="msg-meta">
+          <span class="msg-time">{{ msg.createdAt | date:'shortTime' }}</span>
+          @if(msg.sender._id === currentUser?._id) {
+          <span class="status" [ngClass]="msg.status">
+            @switch(msg.status) {
+            @case('sending') {
+            ...
+            }
+            @case('failed') {
+            ⚠️
+            }
+            @case('sent') {
+            ✓
+            }
+            @case('delivered') {
+            ✓✓
+            }
+            @case('read') {
+            ✓✓
+            }
+            }
+          </span>
+          }
+        </div>
+      </div>
+    </div>
+    } @empty {
+    <div class="no-messages">
+      <span class="chat-icon">💬</span>
+      <p>No messages yet. Say hi!</p>
+    </div>
+    }
+  </div>
+  }
+</div>
+
+@if(thread.status === 'active') {
+@if(voiceError) {
+<div class="voice-error-toast" (click)="dismissVoiceError()">
+  <span class="voice-error-icon">⚠️</span>
+  <span class="voice-error-text">{{ voiceError }}</span>
+</div>
+}
+<div class="message-input-bar">
+  @if(chatService.selectedThread()){
+
+  @if(chatService.typingUsers()[chatService.selectedThread()!._id]){
+
+  <div class="typing">
+
+    {{
+    chatService.typingUsers()[chatService.selectedThread()!._id]
+    }}
+
+    is typing...
+
+  </div>
+
+  }
+
+  }
+  @if(previewUrl) {
+  <div class="image-provider">
+    @if(isVideoSelected) {
+    <video [src]="previewUrl" muted autoplay style="max-height: 100px; max-width: 100px; object-fit: cover;"></video>
+    } @else if (isAudioSelected) {
+    <audio [src]="previewUrl" controls style="max-height: 40px; max-width: 250px;"></audio>
+    } @else {
+    <img [src]="previewUrl">
+    }
+    <button (click)="cancelImage()">
+      X
+    </button>
+  </div>
+  }
+  <input type="text" placeholder="Type a message..." [(ngModel)]="newMessageText" (input)="onTyping()"
+    (keydown.enter)="sendMessage()">
+  <label class="attach-btn">
+    @
+    <input hidden type="file" accept="image/*, video/*, audio/*" (change)="onFileSelected($event)">
+  </label>
+  <button type="button" (click)="toggleMic()" [class.listening]="isAiListening || isRecording">
+    🎤
+  </button>
+  @if(isRecording) {
+  <div class="recording">
+    🔴 Recording...
+    {{recordingTime}} sec
+  </div>
+  }
+  <button class="send-btn" (click)="sendMessage()">Send</button>
+</div>
+}
+} @else {
+<div class="no-conversation-selected">
+  <span class="select-icon">💬</span>
+  <h2>Select a conversation to start chatting</h2>
+</div>
+} -->
+
+@if (callState === 'calling' || callState === 'incoming' || callState === 'connected') {
+<div class="call-window" [class.collapsed]="isCallCollapsed">
+  <!-- Collapsed pill -->
+  @if (isCallCollapsed) {
+  <div class="call-pill" (click)="toggleCallCollapse()">
+    <span class="pill-icon" [class.pulse]="callState !== 'connected'">📞</span>
+    <span class="pill-text">
+      @switch (callState) {
+      @case ('calling') { Calling… }
+      @case ('incoming') { Incoming call }
+      @case ('connected') { Call connected }
+      }
+    </span>
+    @if (callState === 'connected') {
+    <span class="call-duration pill-duration">{{ formattedCallDuration }}</span>
+    <button class="pill-mute-btn" [class.active]="isMuted" (click)="toggleMute(); $event.stopPropagation()"
+      title="{{ isMuted ? 'Unmute' : 'Mute' }}">
+      {{ isMuted ? '🔇' : '🎤' }}
+    </button>
+    <button class="pill-camera-btn" [class.active]="isCameraOf" (click)="toggleCamera(); $event.stopPropagation()"
+      title="{{ isCameraOf ? 'Turn camera on' : 'Turn camera off' }}">
+      {{ isCameraOf ? '📷' : '🎥' }}
+    </button>
+    <button class="pill-end-btn" (click)="endCall(); $event.stopPropagation()" title="End call">
+      ✕
+    </button>
+    }
+  </div>
+  }
+
+  <!-- Expanded window -->
+  @if (!isCallCollapsed) {
+  <div class="call-card" [class.with-video]="callState === 'connected'">
+    <button class="collapse-btn" (click)="toggleCallCollapse()" title="Minimize">
+      ─
+    </button>
+
+    <!-- @if (callState !== 'connected') { -->
+    <div class="call-icon" [class.pulse]="callState !== 'connected'">📞</div>
+    <!-- } -->
+
+    @switch (callState) {
+    @case ('calling') {
+    <h3>Calling...</h3>
+    <p>Calling {{ getOtherParticipants(chatService.selectedThread()!)?.username }}</p>
+    <button class="end-call-btn" (click)="endCall()">End Call</button>
+    }
+    @case ('incoming') {
+    <h3>Incoming Call</h3>
+    <p>{{ incomingCallerUsername || 'Someone' }} is calling you</p>
+    <div class="call-actions">
+      <button class="accept-call-btn" (click)="acceptIncomingCall()">Accept</button>
+      <button class="reject-call-btn" (click)="rejectIncomingCall()">Reject</button>
+    </div>
+    }
+    @case ('connected') {
+    <h3>Call Connected</h3>
+    <span class="call-duration">{{ formattedCallDuration }}</span>
+    <p>{{ activeCallUsername || 'Someone' }}</p>
+
+    <div class="video-stage">
+      <video #remoteVideo class="remote-video" autoplay playsinline></video>
+      <video #localVideo class="local-video" autoplay muted playsinline [class.hidden]="isCameraOf"></video>
+    </div>
+
+    <div class="call-actions">
+      <button class="mute-btn" [class.active]="isMuted" (click)="toggleMute()">
+        {{ isMuted ? '🔇 Unmute' : '🎤 Mute' }}
+      </button>
+      <button class="on-off-btn" [class.active]="isCameraOf" (click)="toggleCamera()">
+        {{ isCameraOf ? "📷 Camera off" : "📷 Camera on" }}
       </button>
       <button class="end-call-btn" (click)="endCall()">End Call</button>
     </div>

@@ -18,11 +18,20 @@ export class WebRTCService {
   private pendingIceCandidates: RTCIceCandidateInit[] = [];
 
   async getMicrophone(): Promise<MediaStream> {
-    this.localStream = await navigator.mediaDevices.getUserMedia({
-      video: false,
-      audio: true,
-    });
-    return this.localStream;
+    try {
+      this.localStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+      return this.localStream;
+    } catch (videoError) {
+      console.warn('Failed to capture video, trying audio-only fallback:', videoError);
+      this.localStream = await navigator.mediaDevices.getUserMedia({
+        video: false,
+        audio: true,
+      });
+      return this.localStream;
+    }
   }
 
   createPeerConnection(): RTCPeerConnection {
@@ -37,9 +46,18 @@ export class WebRTCService {
 
     this.peerConnection.ontrack = (event) => {
       console.log('Remote track received', event.track);
-      event.streams[0].getTracks().forEach((track) => {
-        this.remoteStream?.addTrack(track);
-      });
+      const stream = (event.streams && event.streams[0]) ? event.streams[0] : null;
+      if (stream) {
+        stream.getTracks().forEach((track) => {
+          if (!this.remoteStream?.getTracks().find(t => t.id === track.id)) {
+            this.remoteStream?.addTrack(track);
+          }
+        });
+      } else {
+        if (!this.remoteStream?.getTracks().find(t => t.id === event.track.id)) {
+          this.remoteStream?.addTrack(event.track);
+        }
+      }
       if (this.remoteStream) {
         this.remoteStreamSubject.next(this.remoteStream);
       }

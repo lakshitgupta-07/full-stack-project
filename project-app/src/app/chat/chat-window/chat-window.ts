@@ -28,6 +28,8 @@ type CallState = 'idle' | 'calling' | 'incoming' | 'connected';
 export class ChatWindow implements AfterViewInit {
   @ViewChild('messagesContainer') messageContainer!: ElementRef<HTMLDivElement>;
   @ViewChild('remoteAudio') remoteAudio!: ElementRef<HTMLAudioElement>;
+  @ViewChild('localVideo') localVideo!: ElementRef<HTMLVideoElement>
+  @ViewChild('remoteVideo') remoteVideo!: ElementRef<HTMLVideoElement>
   public chatService = inject(ChatService);
   public authState = inject(AuthStateService);
   private socketService = inject(SocketService);
@@ -65,6 +67,7 @@ export class ChatWindow implements AfterViewInit {
 
   isCallCollapsed = false;
   isMuted = false
+  isCameraOf = false
 
   toggleCallCollapse() {
     this.isCallCollapsed = !this.isCallCollapsed;
@@ -172,6 +175,12 @@ get formattedCallDuration(): string {
       this.remoteAudio.nativeElement.play().catch((error) => {
         console.error('Could not play remote audio:', error);
       });
+      if (this.localVideo) {
+        this.localVideo.nativeElement.srcObject = this.webRTCService.getLocalStream();
+      }
+      if (this.remoteVideo) {
+        this.remoteVideo.nativeElement.srcObject = stream;
+      }
     });
   }
 
@@ -380,6 +389,7 @@ get formattedCallDuration(): string {
   async startRecording() {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
+      video: true
     });
 
     this.audioRecorder = new MediaRecorder(stream);
@@ -428,6 +438,11 @@ get formattedCallDuration(): string {
     }
     this.activeCallUsername = otherUser.username;
     this.callState = 'calling';
+    setTimeout(() => {
+      if (this.localVideo) {
+        this.localVideo.nativeElement.srcObject = this.webRTCService.getLocalStream();
+      }
+    }, 100);
     await this.socketService.createCallOffer(otherUser._id, (response) => {
       console.log('Call response:', response);
       if (!response?.success) {
@@ -478,6 +493,12 @@ get formattedCallDuration(): string {
       this.startCallTimer();
 
       await this.socketService.handleIncomingCall(this.incomingCallerId, this.incomingCallerOffer);
+
+      setTimeout(() => {
+        if (this.localVideo) {
+          this.localVideo.nativeElement.srcObject = this.webRTCService.getLocalStream();
+        }
+      }, 100);
 
       console.log('Incoming call accepted');
     } catch (error) {
@@ -543,6 +564,15 @@ get formattedCallDuration(): string {
     if(!audioTrack) return;
     audioTrack.enabled = !audioTrack.enabled
     this.isMuted = !audioTrack.enabled
+  }
+  toggleCamera(): void {
+    const stream = this.webRTCService.getLocalStream();
+    if (!stream) return;
+
+    const videoTrack = stream.getVideoTracks()[0];
+    if(!videoTrack) return
+    videoTrack.enabled = !videoTrack.enabled;
+    this.isCameraOf = !videoTrack.enabled
   }
 
   clearChat(): void {
