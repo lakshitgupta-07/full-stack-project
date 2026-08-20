@@ -1,3 +1,4 @@
+<audio #remoteAudio autoplay style="display: none;"></audio>
 @if(chatService.selectedThread(); as thread) {
 <div class="chat-header">
   <h3>
@@ -7,6 +8,9 @@
     {{ getOtherParticipants(thread)?.username }}
     }
   </h3>
+  <button *ngIf="!chatService.selectedThread()?.isAI" type="button" class="call-btn" (click)="testCall()">
+    📞
+  </button>
 
   <button *ngIf="chatService.selectedThread()?.isAI" type="button" class="restart-chat-btn"
     (click)="restartConversation()">
@@ -167,3 +171,4 @@
   <h2>Select a conversation to start chatting</h2>
 </div>
 }
+<audio #remoteAudio autoplay></audio>

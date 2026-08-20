@@ -4,6 +4,7 @@ import { environment } from '../../../environment/envirenment';
 import { ChatService } from './chat.service';
 import { Thread, ChatMessage } from '../models/chat.model';
 import { AuthStateService } from './auth-state.service';
+import { WebRTCService } from './webrtc.service';
 
 @Injectable({
   providedIn: 'root',
@@ -11,7 +12,12 @@ import { AuthStateService } from './auth-state.service';
 export class SocketService {
   private socket!: Socket;
   private authState = inject(AuthStateService);
+  private peerConnection: RTCPeerConnection | null = null;
+  private localStream: MediaStream | null = null;
   private listenersInitialized = false;
+  private remoteUserId: string | null = null;
+  private pendingIceCandidates: RTCIceCandidateInit[] = [];
+  private webRTCService = inject(WebRTCService)
 
   connect(token: string): void {
     if (this.socket?.connected) {
@@ -111,6 +117,135 @@ export class SocketService {
       },
     );
   }
+  private setupIceCandidatesListeners(): void {
+    if (!this.peerConnection) return;
+
+    this.peerConnection.onicecandidate = (event) => {
+      if (!event.candidate) return;
+      console.log('ICE candidate generated');
+      this.socket?.emit('ice-candidate', {
+        candidate: event.candidate,
+      });
+    };
+  }
+  async handleRemoteIceCandidate(candidate: RTCIceCandidate): Promise<void> {
+    if (!this.peerConnection) {
+      return;
+    }
+    if (!this.peerConnection.remoteDescription) {
+      this.pendingIceCandidates.push(candidate);
+      console.log('ICE candidate queued');
+      return;
+    }
+    try {
+      await this.peerConnection?.addIceCandidate(candidate);
+      console.log('Remote ICE candidate added');
+    } catch (error) {
+      console.error('Failed to add remote ICE candidate', error);
+    }
+  }
+  async createCallOffer(receiverId: string, callback: (response: any) => void): Promise<void> {
+    try {
+      this.remoteUserId = receiverId;
+      this.localStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
+      this.peerConnection = this.webRTCService.createPeerConnection()
+      this.setupIceCandidatesListeners();
+      this.localStream.getTracks().forEach((track) => {
+        this.peerConnection!.addTrack(track, this.localStream!);
+      });
+      const offer = await this.peerConnection.createOffer();
+      await this.peerConnection.setLocalDescription(offer);
+      this.emit(
+        'call-user',
+        {
+          receiverId,
+          offer: this.peerConnection.localDescription,
+        },
+        callback,
+      );
+    } catch (error) {
+      console.error('Failed to create Webrtc offer', error);
+      callback({
+        success: false,
+        error: 'Could not start the call',
+      });
+    }
+  }
+  async handleCallAccepted(
+    answer: RTCSessionDescriptionInit,
+    // callback: (response: any) => void
+  ): Promise<void> {
+    if (!this.peerConnection) {
+      console.error('No peer connection exists');
+      return;
+    }
+    try {
+      await this.peerConnection.setRemoteDescription(answer);
+      for (const candidate of this.pendingIceCandidates) {
+        await this.peerConnection.addIceCandidate(candidate);
+      }
+
+      this.pendingIceCandidates = [];
+
+      console.log('Remote WebRTC answer set successfully');
+      console.log('Call accepted');
+    } catch (error) {
+      console.error('Failed to accept call', error);
+    }
+  }
+  async handleIncomingCall(callerId: string, offer: RTCSessionDescriptionInit): Promise<void> {
+    try {
+      console.log('Incoming WebRtc from', callerId);
+      this.remoteUserId = callerId;
+
+      this.peerConnection = this.webRTCService.createPeerConnection()
+      this.setupIceCandidatesListeners();
+      this.localStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
+      this.localStream.getTracks().forEach((track) => {
+        this.peerConnection!.addTrack(track, this.localStream!);
+      });
+
+      await this.peerConnection.setRemoteDescription(offer);
+      for (const candidate of this.pendingIceCandidates) {
+        await this.peerConnection.addIceCandidate(candidate);
+      }
+
+      this.pendingIceCandidates = [];
+      const answer = await this.peerConnection.createAnswer();
+      await this.peerConnection.setLocalDescription(answer);
+      this.socket?.emit('accept-call', {
+        callerId,
+        answer: this.peerConnection.localDescription,
+      });
+      console.log('Webrtc answer');
+    } catch (error) {
+      console.error('Failed to handle incoming WebRTC call:', error);
+    }
+  }
+  rejectCall(callId: string, callback?: Function): void {
+    this.emit(
+      'reject-call',
+      {
+        callId,
+      },
+      callback as any,
+    );
+  }
+  endCall(callId: string, callback?: Function): void {
+    this.emit(
+      'end-call',
+      {
+        callId,
+      },
+      callback as any,
+    );
+  }
   leaveThread(threadId: string, callback?: Function): void {
     this.socket?.emit('leave-thread', { threadId }, callback as any);
   }
@@ -193,6 +328,20 @@ export class SocketService {
       if (chatService.selectedThread()?._id === data.threadId) {
         chatService.messages.set([]);
       }
+    });
+    this.on(
+      'incoming-call',
+      async (data: { callerId: string; offer: RTCSessionDescriptionInit }) => {
+        console.log('Incoming call from', data);
+        await this.handleIncomingCall(data.callerId, data.offer);
+      },
+    );
+    this.on('call-accepted', async (data: { answer: RTCSessionDescriptionInit }) => {
+      await this.handleCallAccepted(data.answer);
+    });
+    this.on('ice-candidate', async (data: { senderId: string; candidates: RTCIceCandidate }) => {
+      console.log('ICE cand received');
+      await this.handleRemoteIceCandidate(data.candidates);
     });
   }
 }

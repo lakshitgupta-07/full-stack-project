@@ -13,6 +13,10 @@ import { messageDelivered } from "./handlers/message/messageDelivered.js";
 import { getMyThread } from "./handlers/threads/getMyThreads.js";
 import { createGroup } from "./handlers/group/createGroup.js";
 import { Thread } from "../models/thread.model.js";
+import crypto from "node:crypto"
+import { callUser } from "./handlers/call/callUser.js";
+import { acceptCall } from "./handlers/call/acceptCall.js";
+import { iceCandidate } from "./handlers/call/iceCandidates.js";
 
 
 let io: Server;
@@ -26,6 +30,17 @@ export const initializeSocket = (server: HttpServer) => {
             credentials: true
         },
     });
+//     const allowedOrigins = [
+//   "http://localhost:4200",
+// //   "http://192.168.1.10:4200",
+// ];
+
+// io = new Server(server, {
+//   cors: {
+//     origin: allowedOrigins,
+//     credentials: true,
+//   },
+// });
     io.use(socketAuth)
     io.on("connection", (socket) => {
         const authSocket = socket as AuthenticatedSocket
@@ -132,6 +147,51 @@ export const initializeSocket = (server: HttpServer) => {
                         success: false,
                         error: err.message
                     });
+                }
+            }
+        )
+        authSocket.on(
+            "call-user", 
+            async (payload, callback) => {
+                try {
+                    const result = await callUser(authSocket, payload);
+                    callback({
+                        success: true,
+                        ...result
+                    })
+                } catch (err: any) {
+                    callback({
+                        success: false,
+                        error: err.message
+                    })
+                }
+            }
+        )
+        authSocket.on(
+            "accept-call",
+            async (payload, callback) => {
+                try {
+                    await acceptCall(authSocket, payload)
+                    callback({
+                        success: true,
+                    })
+                } catch (err: any) {
+                    if(callback){
+                        callback({
+                        success: false,
+                        error: err.message
+                    })
+                }
+                }
+            }
+        )
+        authSocket.on(
+            "ice-candidate",
+            async (payload) => {
+                try {
+                    await iceCandidate(authSocket, payload)
+                } catch (error) {
+                    console.error("Ice candidate forwarding failed", error)
                 }
             }
         )
@@ -244,6 +304,19 @@ export const initializeSocket = (server: HttpServer) => {
                     threadId: payload.threadId,
                     unreadCount: 0
                 });
+            }
+        )
+        authSocket.on(
+            "call-user",
+            (
+                payload: {
+                    receiverId: string;
+                    threadId: string;
+                    callType: "audio" | "video"
+                },
+                callback
+            ) => {
+
             }
         )
         authSocket.on(
@@ -386,8 +459,8 @@ export const initializeSocket = (server: HttpServer) => {
 };
 
 export const getIO = () => {
-    if (!io) {
-        throw new Error("Socket.ID not intialized")
-    }
+    // if (!io) {
+    //     throw new Error("Socket.ID not intialized")
+    // }
     return io;
 }

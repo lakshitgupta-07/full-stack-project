@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, ViewChild, ElementRef, effect, HostListener } from '@angular/core';
+import { Component, inject, ViewChild, ElementRef, effect, HostListener, AfterViewInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '../../core/services/chat.service';
 import { AuthStateService } from '../../core/services/auth-state.service';
@@ -8,6 +8,7 @@ import { ChatMessage, Thread } from '../../core/models/chat.model';
 import { UploadService } from '../../core/services/upload.service';
 import { AiTextFormatPipe } from '../../pipes/ai-text-format-pipe';
 import { SpeechRecognitionService } from '../../core/services/speech-recogination.service';
+import { WebRTCService } from '../../core/services/webrtc.service';
 
 @Component({
   selector: 'app-chat-window',
@@ -15,14 +16,16 @@ import { SpeechRecognitionService } from '../../core/services/speech-recoginatio
   templateUrl: './chat-window.html',
   styleUrl: './chat-window.css',
 })
-export class ChatWindow {
+export class ChatWindow implements AfterViewInit {
   @ViewChild('messagesContainer') messageContainer!: ElementRef<HTMLDivElement>;
+  @ViewChild('remoteAudio') remoteAudio!: ElementRef<HTMLAudioElement>;
   public chatService = inject(ChatService);
   public authState = inject(AuthStateService);
   private socketService = inject(SocketService);
   private typingTimeout: any;
   private uploadService = inject(UploadService);
   private speechRecoginition = inject(SpeechRecognitionService);
+  private webRTCService = inject(WebRTCService);
 
   isAiListening = false;
   newMessageText = '';
@@ -68,6 +71,21 @@ export class ChatWindow {
       this.chatService.selectedThread();
       this.chatService.messages();
       this.scrollToBottom();
+    });
+  }
+
+  ngAfterViewInit() {
+    this.webRTCService.remoteStream$.subscribe((stream) => {
+      if (!this.remoteAudio) {
+        console.warn('remoteAudio ViewChild is not initialized yet');
+        return;
+      }
+
+      this.remoteAudio.nativeElement.srcObject = stream;
+
+      this.remoteAudio.nativeElement.play().catch((error) => {
+        console.error('Could not play remote audio:', error);
+      });
     });
   }
 
@@ -306,6 +324,25 @@ export class ChatWindow {
       const file = new File([blob], `voice-${Date.now()}.webm`, { type: 'audio/webm' });
       this.uploadVoice(file);
     };
+  }
+  
+  async testCall() {
+    const thread = this.chatService.selectedThread();
+
+    if (!thread) {
+      console.log('No conversation selected');
+      return;
+    }
+
+    const otherUser = this.getOtherParticipants(thread);
+
+    if (!otherUser) {
+      console.log('No other user found');
+      return;
+    }
+    await this.socketService.createCallOffer(otherUser._id, (response) => {
+      console.log('Call response:', response);
+    });
   }
 
   restartConversation(): void {

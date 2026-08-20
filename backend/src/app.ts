@@ -14,12 +14,29 @@ import { requestLogger } from './middlewares/requestLogger.middleware.js'
 import { morganMiddleware } from './config/morganStream.js'
 const app = express()
 
+// const allowedOrigins = [
+//   "http://localhost:4200",
+// ];
 app.use(
   cors({
     origin: "http://localhost:4200",
+    
     credentials: true,
   })
 );
+
+// app.use(
+//   cors({
+//     origin: (origin, callback) => {
+//       if (!origin || allowedOrigins.includes(origin)) {
+//         callback(null, true);
+//       } else {
+//         callback(new Error("Not allowed by CORS"));
+//       }
+//     },
+//     credentials: true,
+//   })
+// );
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
