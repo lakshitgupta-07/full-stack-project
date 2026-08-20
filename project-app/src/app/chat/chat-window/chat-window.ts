@@ -74,30 +74,30 @@ export class ChatWindow implements AfterViewInit {
   }
 
   private startCallTimer(): void {
-  this.stopCallTimer();
+    this.stopCallTimer();
 
-  this.callDuration = 0;
+    this.callDuration = 0;
 
-  this.callTimer = setInterval(() => {
-    this.callDuration++;
-  }, 1000);
-}
-
-private stopCallTimer(): void {
-  if (this.callTimer) {
-    clearInterval(this.callTimer);
-    this.callTimer = null;
+    this.callTimer = setInterval(() => {
+      this.callDuration++;
+    }, 1000);
   }
-}
 
-get formattedCallDuration(): string {
-  const minutes = Math.floor(this.callDuration / 60);
-  const seconds = this.callDuration % 60;
+  private stopCallTimer(): void {
+    if (this.callTimer) {
+      clearInterval(this.callTimer);
+      this.callTimer = null;
+    }
+  }
 
-  return `${minutes.toString().padStart(2, '0')}:${seconds
-    .toString()
-    .padStart(2, '0')}`;
-}
+  get formattedCallDuration(): string {
+    const minutes = Math.floor(this.callDuration / 60);
+    const seconds = this.callDuration % 60;
+
+    return `${minutes.toString().padStart(2, '0')}:${seconds
+      .toString()
+      .padStart(2, '0')}`;
+  }
 
   get currentUser() {
     return this.authState.user;
@@ -446,8 +446,9 @@ get formattedCallDuration(): string {
     await this.socketService.createCallOffer(otherUser._id, (response) => {
       console.log('Call response:', response);
       if (!response?.success) {
+        this.webRTCService.close();
         this.callState = 'idle';
-        console.log('Failed to start call');
+        alert(response?.error || 'User is offline');
       }
     });
   }
@@ -558,10 +559,10 @@ get formattedCallDuration(): string {
 
   toggleMute(): void {
     const stream = this.webRTCService.getLocalStream();
-    if(!stream) return
+    if (!stream) return
     const audioTrack = stream.getAudioTracks()[0];
 
-    if(!audioTrack) return;
+    if (!audioTrack) return;
     audioTrack.enabled = !audioTrack.enabled
     this.isMuted = !audioTrack.enabled
   }
@@ -570,7 +571,7 @@ get formattedCallDuration(): string {
     if (!stream) return;
 
     const videoTrack = stream.getVideoTracks()[0];
-    if(!videoTrack) return
+    if (!videoTrack) return
     videoTrack.enabled = !videoTrack.enabled;
     this.isCameraOf = !videoTrack.enabled
   }
@@ -629,13 +630,13 @@ get formattedCallDuration(): string {
         username: currentUser.username,
         avatar: currentUser.avatar
           ? {
-              url: currentUser.avatar.url,
-              publicId: currentUser.avatar.publicId,
-            }
+            url: currentUser.avatar.url,
+            publicId: currentUser.avatar.publicId,
+          }
           : {
-              url: '',
-              publicId: '',
-            },
+            url: '',
+            publicId: '',
+          },
         isAI: false,
       },
 
