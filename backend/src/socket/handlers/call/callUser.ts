@@ -14,6 +14,7 @@ export const callUser = async(
     receiverSockets.forEach((socketId) => {
         getIO().to(socketId).emit("incoming-call", {
             callerId: socket.user._id.toString(),
+            callerUsername: socket.user.username,
             offer: payload.offer
         })
     })

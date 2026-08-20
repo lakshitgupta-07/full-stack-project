@@ -1,4 +1,73 @@
-<audio #remoteAudio autoplay style="display: none;"></audio>
+@if (callState === 'calling' || callState === 'incoming' || callState === 'connected') {
+<div class="call-window" [class.collapsed]="isCallCollapsed">
+  <!-- Collapsed pill -->
+  @if (isCallCollapsed) {
+  <div class="call-pill" (click)="toggleCallCollapse()">
+    <span class="pill-icon" [class.pulse]="callState !== 'connected'">📞</span>
+    <span class="pill-text">
+      @switch (callState) {
+      @case ('calling') { Calling… }
+      @case ('incoming') { Incoming call }
+      @case ('connected') { Call connected }
+      }
+    </span>
+    @if (callState === 'connected') {
+      <span class="call-duration">
+      {{ formattedCallDuration }}
+    </span>
+    <button class="pill-mute-btn" [class.active]="isMuted" (click)="toggleMute(); $event.stopPropagation()"
+      title="{{ isMuted ? 'Unmute' : 'Mute' }}">
+      {{ isMuted ? '🔇' : '🎤' }}
+    </button>
+    <button class="pill-end-btn" (click)="endCall(); $event.stopPropagation()" title="End call">
+      ✕
+    </button>
+    }
+  </div>
+  }
+
+  <!-- Expanded window -->
+  @if (!isCallCollapsed) {
+  <div class="call-card">
+    <button class="collapse-btn" (click)="toggleCallCollapse()" title="Minimize">
+      ─
+    </button>
+
+    <div class="call-icon" [class.pulse]="callState !== 'connected'">📞</div>
+
+    @switch (callState) {
+    @case ('calling') {
+    <h3>Calling...</h3>
+    <p>Calling {{ getOtherParticipants(chatService.selectedThread()!)?.username }}</p>
+    <button class="end-call-btn" (click)="endCall()">End Call</button>
+    }
+    @case ('incoming') {
+    <h3>Incoming Call</h3>
+    <p>{{ incomingCallerUsername || 'Someone' }} is calling you</p>
+    <div class="call-actions">
+      <button class="accept-call-btn" (click)="acceptIncomingCall()">Accept</button>
+      <button class="reject-call-btn" (click)="rejectIncomingCall()">Reject</button>
+    </div>
+    }
+    @case ('connected') {
+    <h3>Call Connected</h3>
+    <span class="call-duration">{{ formattedCallDuration }}</span>
+    <p>{{ activeCallUsername || 'Someone' }}</p>
+    <div class="call-actions">
+      <button class="mute-btn" [class.active]="isMuted" (click)="toggleMute()">
+        {{ isMuted ? '🔇 Unmute' : '🎤 Mute' }}
+      </button>
+      <button class="end-call-btn" (click)="endCall()">End Call</button>
+    </div>
+    }
+    }
+  </div>
+  }
+</div>
+}
+
+<audio #remoteAudio autoplay playsinline style="display: none;"></audio>
+
 @if(chatService.selectedThread(); as thread) {
 <div class="chat-header">
   <h3>
@@ -8,17 +77,19 @@
     {{ getOtherParticipants(thread)?.username }}
     }
   </h3>
-  <button *ngIf="!chatService.selectedThread()?.isAI" type="button" class="call-btn" (click)="testCall()">
-    📞
-  </button>
+  <div class="action-headers">
+    <button *ngIf="!chatService.selectedThread()?.isAI" type="button" class="call-btn" (click)="testCall()">
+      📞
+    </button>
 
-  <button *ngIf="chatService.selectedThread()?.isAI" type="button" class="restart-chat-btn"
-    (click)="restartConversation()">
-    ↺ Restart conversation
-  </button>
-  <button *ngIf="!chatService.selectedThread()?.isAI" type="button" class="restart-chat-btn" (click)="clearChat()">
-    ↺ Clear Chat
-  </button>
+    <button *ngIf="chatService.selectedThread()?.isAI" type="button" class="restart-chat-btn"
+      (click)="restartConversation()">
+      ↺ Restart conversation
+    </button>
+    <button *ngIf="!chatService.selectedThread()?.isAI" type="button" class="restart-chat-btn" (click)="clearChat()">
+      ↺ Clear Chat
+    </button>
+  </div>
 </div>
 
 <div class="messages-container" #messagesContainer>
@@ -171,4 +242,3 @@
   <h2>Select a conversation to start chatting</h2>
 </div>
 }
-<audio #remoteAudio autoplay></audio>

@@ -17,6 +17,9 @@ import crypto from "node:crypto"
 import { callUser } from "./handlers/call/callUser.js";
 import { acceptCall } from "./handlers/call/acceptCall.js";
 import { iceCandidate } from "./handlers/call/iceCandidates.js";
+import { success } from "zod";
+import { endCall } from "./handlers/call/endCall.js";
+import { rejectCall } from "./handlers/call/rejectCall.js";
 
 
 let io: Server;
@@ -30,17 +33,6 @@ export const initializeSocket = (server: HttpServer) => {
             credentials: true
         },
     });
-//     const allowedOrigins = [
-//   "http://localhost:4200",
-// //   "http://192.168.1.10:4200",
-// ];
-
-// io = new Server(server, {
-//   cors: {
-//     origin: allowedOrigins,
-//     credentials: true,
-//   },
-// });
     io.use(socketAuth)
     io.on("connection", (socket) => {
         const authSocket = socket as AuthenticatedSocket
@@ -182,6 +174,42 @@ export const initializeSocket = (server: HttpServer) => {
                         error: err.message
                     })
                 }
+                }
+            }
+        )
+        authSocket.on(
+            "end-call",
+            async(payload, callback) => {
+                try {
+                    await endCall(authSocket, payload)
+                    callback({
+                        success: true
+                    })
+                } catch (err: any) {
+                    if(callback) {
+                        callback({
+                            success: false,
+                            error: err.message
+                        })
+                    }
+                }
+            }
+        )
+        authSocket.on(
+            "reject-call",
+            async(payload, callback) => {
+                try {
+                    await rejectCall(authSocket, payload)
+                    callback({
+                        success: true
+                    })
+                } catch (err: any) {
+                    if(callback) {
+                        callback({
+                            success: false,
+                            error: err.message
+                        })
+                    }
                 }
             }
         )

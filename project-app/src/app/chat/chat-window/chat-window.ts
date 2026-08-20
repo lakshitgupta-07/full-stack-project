@@ -1,5 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, ViewChild, ElementRef, effect, HostListener, AfterViewInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  ViewChild,
+  ElementRef,
+  effect,
+  HostListener,
+  AfterViewInit,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '../../core/services/chat.service';
 import { AuthStateService } from '../../core/services/auth-state.service';
@@ -9,6 +17,7 @@ import { UploadService } from '../../core/services/upload.service';
 import { AiTextFormatPipe } from '../../pipes/ai-text-format-pipe';
 import { SpeechRecognitionService } from '../../core/services/speech-recogination.service';
 import { WebRTCService } from '../../core/services/webrtc.service';
+type CallState = 'idle' | 'calling' | 'incoming' | 'connected';
 
 @Component({
   selector: 'app-chat-window',
@@ -45,6 +54,48 @@ export class ChatWindow implements AfterViewInit {
   voiceError: string = '';
   private voiceErrorTimeout: any;
 
+  callState: CallState = 'idle';
+  incomingCallerId: string | null = null;
+  incomingCallerUsername: string | null = null;
+  activeCallUsername: string | null = null;
+  incomingCallerOffer: RTCSessionDescriptionInit | null = null;
+
+  callDuration = 0;
+  private callTimer: ReturnType<typeof setInterval> | null = null
+
+  isCallCollapsed = false;
+  isMuted = false
+
+  toggleCallCollapse() {
+    this.isCallCollapsed = !this.isCallCollapsed;
+  }
+
+  private startCallTimer(): void {
+  this.stopCallTimer();
+
+  this.callDuration = 0;
+
+  this.callTimer = setInterval(() => {
+    this.callDuration++;
+  }, 1000);
+}
+
+private stopCallTimer(): void {
+  if (this.callTimer) {
+    clearInterval(this.callTimer);
+    this.callTimer = null;
+  }
+}
+
+get formattedCallDuration(): string {
+  const minutes = Math.floor(this.callDuration / 60);
+  const seconds = this.callDuration % 60;
+
+  return `${minutes.toString().padStart(2, '0')}:${seconds
+    .toString()
+    .padStart(2, '0')}`;
+}
+
   get currentUser() {
     return this.authState.user;
   }
@@ -67,6 +118,41 @@ export class ChatWindow implements AfterViewInit {
     if (thread) {
       this.socketService.joinThread(thread._id);
     }
+    this.socketService.callAccepted$.subscribe(() => {
+      this.callState = 'connected';
+      this.startCallTimer()
+
+      console.log('Call connected');
+    });
+    this.socketService.incomingCall$.subscribe((data) => {
+      console.log('Incoming call received in ChatWindow');
+
+      this.incomingCallerId = data.callerId;
+      this.incomingCallerUsername = data.callerUsername || 'Someone';
+      this.activeCallUsername = data.callerUsername || 'Someone';
+      this.incomingCallerOffer = data.offer;
+
+      this.callState = 'incoming';
+    });
+    this.socketService.callRejected$.subscribe(() => {
+      this.callState = 'idle';
+
+      this.incomingCallerId = null;
+      this.incomingCallerUsername = null;
+      this.incomingCallerOffer = null;
+      this.activeCallUsername = null;
+
+      console.log('Call was rejected');
+    });
+    this.socketService.callEnded$.subscribe(() => {
+      this.stopCallTimer();
+      this.callDuration = 0;
+      this.callState = 'idle';
+      this.incomingCallerId = null;
+      this.incomingCallerUsername = null;
+      this.incomingCallerOffer = null;
+      this.activeCallUsername = null;
+    });
     effect(() => {
       this.chatService.selectedThread();
       this.chatService.messages();
@@ -325,7 +411,7 @@ export class ChatWindow implements AfterViewInit {
       this.uploadVoice(file);
     };
   }
-  
+
   async testCall() {
     const thread = this.chatService.selectedThread();
 
@@ -340,9 +426,82 @@ export class ChatWindow implements AfterViewInit {
       console.log('No other user found');
       return;
     }
+    this.activeCallUsername = otherUser.username;
+    this.callState = 'calling';
     await this.socketService.createCallOffer(otherUser._id, (response) => {
       console.log('Call response:', response);
+      if (!response?.success) {
+        this.callState = 'idle';
+        console.log('Failed to start call');
+      }
     });
+  }
+
+  endCall(): void {
+    this.stopCallTimer();
+    this.callDuration = 0;
+
+    let otherUserId = this.socketService.getRemoteUserId() || this.incomingCallerId;
+    if (!otherUserId) {
+      const thread = this.chatService.selectedThread();
+      if (thread) {
+        const otherUser = this.getOtherParticipants(thread);
+        if (otherUser) {
+          otherUserId = otherUser._id;
+        }
+      }
+    }
+
+    this.webRTCService.close();
+    this.callState = 'idle';
+
+    if (!otherUserId) {
+      console.warn('Could not end call: no remote user ID found');
+      return;
+    }
+
+    this.socketService.endCall(otherUserId, (response: any) => {
+      if (!response?.success) {
+        console.error('Failed to end call:', response?.error);
+      }
+    });
+  }
+  async acceptIncomingCall(): Promise<void> {
+    if (!this.incomingCallerId || !this.incomingCallerOffer) {
+      console.error('No incoming call information available');
+      return;
+    }
+
+    try {
+      this.callState = 'connected';
+      this.activeCallUsername = this.incomingCallerUsername;
+      this.startCallTimer();
+
+      await this.socketService.handleIncomingCall(this.incomingCallerId, this.incomingCallerOffer);
+
+      console.log('Incoming call accepted');
+    } catch (error) {
+      console.error('Failed to accept incoming call:', error);
+
+      this.callState = 'idle';
+      this.incomingCallerId = null;
+      this.incomingCallerOffer = null;
+    }
+  }
+  rejectIncomingCall(): void {
+    if (!this.incomingCallerId) {
+      return;
+    }
+
+    this.socketService.rejectCall(this.incomingCallerId, (response: any) => {
+      if (!response?.success) {
+        console.error('Failed to reject call:', response?.error);
+      }
+    });
+
+    this.callState = 'idle';
+    this.incomingCallerId = null;
+    this.incomingCallerOffer = null;
   }
 
   restartConversation(): void {
@@ -374,6 +533,16 @@ export class ChatWindow implements AfterViewInit {
 
       console.log('AI conversation restarted');
     });
+  }
+
+  toggleMute(): void {
+    const stream = this.webRTCService.getLocalStream();
+    if(!stream) return
+    const audioTrack = stream.getAudioTracks()[0];
+
+    if(!audioTrack) return;
+    audioTrack.enabled = !audioTrack.enabled
+    this.isMuted = !audioTrack.enabled
   }
 
   clearChat(): void {
@@ -546,14 +715,21 @@ export class ChatWindow implements AfterViewInit {
 
   toggleMic() {
     const thread = this.chatService.selectedThread();
+
     if (!thread) return;
 
     if (thread.isAI) {
-      if (this.isAiListening) this.stopAiSpeech();
-      else this.startAiSpeech();
+      if (this.isAiListening) {
+        this.stopAiSpeech();
+      } else {
+        this.startAiSpeech();
+      }
+
+      return;
     }
 
     this.audioToggle = !this.audioToggle;
+
     if (this.audioToggle) {
       this.startRecording();
     } else {
@@ -571,17 +747,28 @@ export class ChatWindow implements AfterViewInit {
   @HostListener('document:keydown.escape')
   onEscape(): void {
     const thread = this.chatService.selectedThread();
+
     if (!thread) return;
+
     this.socketService.leaveThread(thread._id);
+
     clearTimeout(this.typingTimeout);
     clearTimeout(this.voiceErrorTimeout);
+
+    if (this.isRecording) {
+      this.stopRecording();
+    }
+
+    this.webRTCService.close();
+
     this.voiceError = '';
-    if (this.isRecording) this.stopRecording;
     this.openedImage = null;
     this.newMessageText = '';
     this.selectedFile = null;
     this.isUploading = false;
     this.audioToggle = false;
+    this.isAiListening = false;
+
     this.chatService.clearSelectedThread();
   }
 }
